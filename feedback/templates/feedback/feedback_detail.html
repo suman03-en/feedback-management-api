@@ -1,0 +1,13 @@
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %} Feedback Details {% endblock title %}</title>
+  </head>
+  <body>
+    <h1>{{ feedback.name }}</h1>
+    <p>{{ feedback.description }}</p>
+    <p><strong>Status:</strong> {{ feedback.status }}</p>
+    <p><i>Created at: {{ feedback.created_at }}</i></p>
+  </body>
+</html>
