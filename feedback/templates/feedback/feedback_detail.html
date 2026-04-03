@@ -10,5 +10,7 @@
     <p><strong>Status:</strong> {{ feedback.status }}</p>
     <p><i>Created at: {{ feedback.created_at }}</i></p>
     <a href="{% url "feedback_delete" feedback.pk %}">Delete Feedback</a>
+    <br>
+    <a href="{% url "feedback_response_create" feedback.pk %}">Respond to Feedback</a>
   </body>
 </html>
