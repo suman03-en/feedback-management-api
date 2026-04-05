@@ -1,5 +1,5 @@
 from django import forms
-from .models import Feedback, FeedbackResponse
+from .models import Feedback, FeedbackResponse, Department
 
 
 class FeedbackForm(forms.ModelForm):

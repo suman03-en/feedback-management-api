@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Feedback, FeedbackResponse
+from .models import Feedback, FeedbackResponse, Department
 
 
 class FeedbackAdmin(admin.ModelAdmin):
@@ -14,5 +14,12 @@ class FeedbackResponseAdmin(admin.ModelAdmin):
     list_filter = ("created_at",)
 
 
+class DepartmentAdmin(admin.ModelAdmin):
+    list_display = ("name", "description")
+    search_fields = ("name", "description")
+
+
+#register your models here
 admin.site.register(Feedback, FeedbackAdmin)
 admin.site.register(FeedbackResponse, FeedbackResponseAdmin)
+admin.site.register(Department, DepartmentAdmin)
