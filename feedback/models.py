@@ -18,6 +18,9 @@ class Feedback(models.Model):
     message = models.TextField()
     status = models.CharField(max_length=20, choices=status_choices, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)
+    to_departments = models.ManyToManyField(
+        "Department", through="FeedbackDepartment", related_name="feedbacks"
+    )
 
     def get_absolute_url(self):
         return reverse("feedback_detail", kwargs={"pk": self.pk})
@@ -42,10 +45,10 @@ class FeedbackDepartment(models.Model):
     """
 
     feedback = models.ForeignKey(
-        Feedback, on_delete=models.CASCADE, related_name="departments"
+        Feedback, on_delete=models.CASCADE, related_name="feedback_departments"
     )
     department = models.ForeignKey(
-        Department, on_delete=models.CASCADE, related_name="feedbacks"
+        Department, on_delete=models.CASCADE, related_name="department_feedbacks"
     )
 
     def __str__(self):
@@ -64,5 +67,3 @@ class FeedbackResponse(models.Model):
 
     def __str__(self):
         return f"Response to {self.feedback.name} by {self.responder_name}"
-    
-    

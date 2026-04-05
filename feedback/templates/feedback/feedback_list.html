@@ -1,18 +1,73 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %} List of feedbacks. {% endblock title %}</title>
-  </head>
-  <body>
-    <h3><a href="{% url "feedback_create" %}">Create New Feedback</a></h3>
-    <h1>List of Feedbacks</h1> 
-    <i>Author: {{ author }}</i>
+{% extends "feedback/base.html" %} {% block title %}Feedback List{% endblock title %} {% block content %}
+<section class="card card-soft">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Queue overview</p>
+      <h2 class="section-title">All feedback items</h2>
+      <p class="section-subtitle">
+        Track incoming feedback, spot what needs attention, and move items
+        through review faster.
+      </p>
+    </div>
+    <div class="button-group">
+      <a class="button button-primary" href="{% url 'feedback_create' %}"
+        >Create feedback</a
+      >
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat">
+      <p class="stat-label">Total items</p>
+      <p class="stat-value">{{ feedbacks|length }}</p>
+    </div>
+    <div class="stat">
+      <p class="stat-label">Owner</p>
+      <p class="stat-value">{{ author }}</p>
+    </div>
+    <div class="stat">
+      <p class="stat-label">Queue state</p>
+      <p class="stat-value">Live</p>
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="feedback-list">
     {% for feedback in feedbacks %}
-    <a href="{% url "feedback_detail" feedback.pk %}"><p>counter: {{ forloop.counter }} - {{ feedback.name }}</p>
-    </a>
-    
+    <article class="feedback-card">
+      <div class="feedback-card-header">
+        <div>
+          <p class="eyebrow">#{{ forloop.counter }}</p>
+          <h3 class="feedback-title">{{ feedback.name }}</h3>
+          <p class="feedback-summary">
+            {{ feedback.message|truncatechars:150 }}
+          </p>
+        </div>
+        <span class="badge badge-{{ feedback.status }}"
+          >{{ feedback.status }}</span
+        >
+      </div>
+
+      <div class="actions">
+        <a
+          class="button button-secondary"
+          href="{% url 'feedback_detail' feedback.pk %}"
+          >View details</a
+        >
+        <a
+          class="button button-ghost"
+          href="{% url 'feedback_response_list' feedback.pk %}"
+          >Responses</a
+        >
+      </div>
+    </article>
+    {% empty %}
+    <div class="empty-state">
+      No feedback has been submitted yet. Create the first item to start the
+      queue.
+    </div>
     {% endfor %}
-  </body>
-</html>
+  </div>
+</section>
+{% endblock content %}

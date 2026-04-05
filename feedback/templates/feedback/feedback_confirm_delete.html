@@ -1,17 +1,27 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Delete Feedback</title>
-  </head>
-  <body>
-    <h2>Delete Feedback</h2>
-    <p>Are you sure you want to delete this feedback?</p>
-    <form method="post">
-      {% csrf_token %}
-      <button type="submit">Yes, Delete</button>
-      <a href="{% url 'feedback_list' %}">Cancel</a>
-    </form>
-  </body>
-</html>
+{% extends "feedback/base.html" %} {% block title %}Delete Feedback{% endblock title %} {% block content %}
+<section class="card danger-card">
+  <div class="delete-header">
+    <div>
+      <p class="eyebrow">Danger zone</p>
+      <h2 class="section-title">Delete feedback</h2>
+      <p class="section-subtitle">
+        This removes the item and its related actions from the queue.
+      </p>
+    </div>
+  </div>
+
+  <p class="danger-note">
+    Are you sure you want to delete this feedback? This cannot be undone.
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="button-group">
+      <button class="button button-danger" type="submit">Yes, delete</button>
+      <a class="button button-secondary" href="{% url 'feedback_list' %}"
+        >Cancel</a
+      >
+    </div>
+  </form>
+</section>
+{% endblock content %}

@@ -1,21 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Response List</title>
-</head>
-<body>
-    <h1>Responses for Feedback: {{ feedback.name }}</h1>
+{% extends "feedback/base.html" %} {% block title %}Responses for {{
+feedback.name }}{% endblock title %} {% block content %}
+<section class="card card-soft">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Conversation history</p>
+      <h2 class="section-title">Responses for {{ feedback.name }}</h2>
+      <p class="section-subtitle">
+        Review every reply associated with this request in chronological
+        context.
+      </p>
+    </div>
+    <div class="button-group">
+      <a
+        class="button button-secondary"
+        href="{% url 'feedback_detail' feedback.pk %}"
+        >Back to detail</a
+      >
+      <a
+        class="button button-primary"
+        href="{% url 'feedback_response_create' feedback.pk %}"
+        >Add response</a
+      >
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="feedback-list">
     {% for response in responses %}
+    <article class="response-card">
+      <div class="response-card-header">
         <div>
-            <p><strong>Responder Name:</strong> {{ response.responder_name }}</p>
-            <p><strong>Message:</strong> {{ response.responder_message }}</p>
-            <p><i>Created at: {{ response.created_at }}</i></p>
+          <p class="eyebrow">{{ response.created_at|date:"M d, Y" }}</p>
+          <h3 class="card-title">{{ response.responder_name }}</h3>
         </div>
-        <hr>
+        <span class="badge badge-reviewed">Reply</span>
+      </div>
+      <p class="response-text">{{ response.responder_message }}</p>
+    </article>
     {% empty %}
-        <p>No responses yet.</p>
+    <div class="empty-state">
+      No responses yet. Add the first response to document the resolution path.
+    </div>
     {% endfor %}
-</body>
-</html>
+  </div>
+</section>
+{% endblock content %}

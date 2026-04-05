@@ -5,7 +5,7 @@ from .models import Feedback, FeedbackResponse, Department
 class FeedbackForm(forms.ModelForm):
     class Meta:
         model = Feedback
-        exclude = ["status", "created_at"]
+        exclude = ["status", "created_at",]
 
     def save(self, commit=...):
         self.instance.status = "pending"

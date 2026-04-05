@@ -1,17 +1,82 @@
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %} Feedback Details {% endblock title %}</title>
-  </head>
-  <body>
-    <h1>{{ feedback.name }}</h1>
-    <p>{{ feedback.description }}</p>
-    <p><strong>Status:</strong> {{ feedback.status }}</p>
-    <p><i>Created at: {{ feedback.created_at }}</i></p>
-    <a href="{% url "feedback_delete" feedback.pk %}">Delete Feedback</a>
-    <br>
-    <a href="{% url "feedback_response_list" feedback.pk %}">View Responses</a> <br>
-    <a href="{% url "feedback_response_create" feedback.pk %}">Respond to Feedback</a>
-  </body>
-</html>
+{% extends "feedback/base.html" %} {% block title %}{{ feedback.name }} |
+Feedback Details{% endblock title %} {% block content %}
+<section class="detail-layout">
+  <article class="card detail-card">
+    <div class="detail-header">
+      <div>
+        <p class="eyebrow">Feedback detail</p>
+        <h2 class="section-title">{{ feedback.name }}</h2>
+        <p class="section-subtitle">
+          Submitted on {{ feedback.created_at|date:"M d, Y" }} at 
+          {{ feedback.created_at|date:"h:i A" }}.
+        </p>
+      </div>
+      <span class="badge badge-{{ feedback.status }}"
+        >{{ feedback.status }}</span
+      >
+    </div>
+
+    <p class="detail-lead">{{ feedback.message }}</p>
+
+    <div class="detail-meta-grid">
+      <div class="meta-block">
+        <p class="meta-label">Sender</p>
+        <p class="meta-value">{{ feedback.name }}</p>
+        <p class="meta">{{ feedback.email }}</p>
+      </div>
+
+      <div class="meta-block">
+        <p class="meta-label">Departments</p>
+        {% if feedback.to_departments.all %}
+        <ul class="chip-list">
+          {% for department in feedback.to_departments.all %}
+          <li class="chip">{{ department.name }}</li>
+          {% empty %}
+          <li class="meta-value">No departments linked.</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="meta-value">No departments linked.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="actions">
+      <a
+        class="button button-primary"
+        href="{% url 'feedback_response_create' feedback.pk %}"
+        >Respond</a
+      >
+      <a
+        class="button button-secondary"
+        href="{% url 'feedback_response_list' feedback.pk %}"
+        >View responses</a
+      >
+      <a
+        class="button button-danger"
+        href="{% url 'feedback_delete' feedback.pk %}"
+        >Delete</a
+      >
+    </div>
+  </article>
+
+  <aside class="card sidebar-card">
+    <p class="eyebrow">Quick context</p>
+    <h3 class="card-title">What happens next</h3>
+    <p class="section-subtitle">
+      Review the message, route it to the right department, and mark it resolved
+      once the issue is closed.
+    </p>
+    <div class="detail-meta-grid">
+      <div class="meta-block">
+        <p class="meta-label">Current status</p>
+        <p class="meta-value">{{ feedback.status|title }}</p>
+      </div>
+      <div class="meta-block">
+        <p class="meta-label">Created</p>
+        <p class="meta-value">{{ feedback.created_at|date:"F j, Y" }}</p>
+      </div>
+    </div>
+  </aside>
+</section>
+{% endblock content %}

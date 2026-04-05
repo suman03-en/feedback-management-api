@@ -1,28 +1,47 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Feedback Response</title>
-  </head>
-  <body>
-    <h1>Feedback Response</h1>
-    <p><strong>Feedback from:</strong> {{ feedback.name }}</p>
-    <p><strong>Message:</strong> {{ feedback.message }}</p>
+{% extends "feedback/base.html" %} {% block title %}Respond to Feedback{%endblock title %} {% block content %}
+<section class="detail-layout">
+  <article class="card form-card">
+    <div class="form-header">
+      <div>
+        <p class="eyebrow">Action item</p>
+        <h2 class="section-title">Respond to feedback</h2>
+        <p class="section-subtitle">
+          Add a clear response and optionally mark the request as resolved.
+        </p>
+      </div>
+      <span class="badge badge-{{ feedback.status }}"
+        >{{ feedback.status }}</span
+      >
+    </div>
 
-    <hr />
+    <div class="meta-block preview-block">
+      <p class="meta-label">Feedback preview</p>
+      <p class="meta-value">{{ feedback.name }}</p>
+      <p class="feedback-summary">{{ feedback.message }}</p>
+    </div>
+
     <form
       action="{% url 'feedback_response_create' feedback.pk %}"
       method="post"
     >
       {% csrf_token %} {{ form.as_p }}
-      <button type="submit">Submit Response</button>
+      <div class="form-help">
+        Mark the item as resolved only when the issue is fully closed. Otherwise
+        it will be moved to reviewed.
+      </div>
+      <button class="button button-primary" type="submit">
+        Submit response
+      </button>
     </form>
-    <p>
-      <i
-        >Only mark the resolve if you the feedback is resolved successfully,
-        leave it for status reviewed.</i
-      >
+  </article>
+
+  <aside class="card sidebar-card">
+    <p class="eyebrow">Status flow</p>
+    <h3 class="card-title">Keep routing simple</h3>
+    <p class="section-subtitle">
+      Reviewed means the feedback has been acknowledged. Resolved should be
+      reserved for completed outcomes.
     </p>
-  </body>
-</html>
+  </aside>
+</section>
+{% endblock content %}

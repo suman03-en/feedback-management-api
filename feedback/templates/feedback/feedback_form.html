@@ -1,15 +1,19 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Feedback Form</title>
-  </head>
-  <body>
-    <h1>Submit Feedback</h1>
-    <form method="post">
-      {% csrf_token %} {{ form.as_p }}
-      <button type="submit">Submit</button>
-    </form>
-  </body>
-</html>
+{% extends "feedback/base.html" %} {% block title %}Submit Feedback{% endblock title %} {% block content %}
+<section class="card form-card">
+  <div class="form-header">
+    <div>
+      <p class="eyebrow">Create item</p>
+      <h2 class="section-title">Submit feedback</h2>
+      <p class="section-subtitle">
+        Capture the request clearly so it can be triaged and assigned without
+        extra back-and-forth.
+      </p>
+    </div>
+  </div>
+
+  <form method="post">
+    {% csrf_token %} {{ form.as_p }}
+    <button class="button button-primary" type="submit">Submit feedback</button>
+  </form>
+</section>
+{% endblock content %}
