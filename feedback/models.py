@@ -14,13 +14,20 @@ class Feedback(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
-    email = models.EmailField()
+    email = models.EmailField(blank=True, null=True)
     message = models.TextField()
     status = models.CharField(max_length=20, choices=status_choices, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)
     to_departments = models.ManyToManyField(
         "Department", through="FeedbackDepartment", related_name="feedbacks"
     )
+    is_anonymous = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if self.is_anonymous:
+            self.name = "Anonymous"
+            self.email = ""
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse("feedback_detail", kwargs={"pk": self.pk})

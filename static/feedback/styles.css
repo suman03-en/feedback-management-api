@@ -374,6 +374,10 @@ form label {
   font-weight: 700;
 }
 
+form .is-disabled-field label {
+  color: #7b8598;
+}
+
 input,
 textarea,
 select {
@@ -393,6 +397,23 @@ textarea:focus,
 select:focus {
   border-color: rgba(15, 118, 110, 0.6);
   box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+}
+
+form input:disabled,
+form textarea:disabled,
+form select:disabled,
+form .is-disabled-ui {
+  background: #dfe5ef !important;
+  border-color: #bcc7d9 !important;
+  color: #5f6b7d !important;
+  cursor: not-allowed;
+}
+
+form .is-disabled-field {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f1f4f9;
+  border: 1px solid #d7dee9;
 }
 
 textarea {
