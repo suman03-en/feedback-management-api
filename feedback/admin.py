@@ -9,7 +9,7 @@ class FeedbackAdmin(admin.ModelAdmin):
 
 
 class FeedbackResponseAdmin(admin.ModelAdmin):
-    list_display = ("feedback", "responder_name", "responder_message", "created_at")
+    list_display = ("feedback", "responder_message", "created_at")
     search_fields = ("responder_name", "responder_message")
     list_filter = ("created_at",)
 

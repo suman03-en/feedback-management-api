@@ -12,8 +12,9 @@ Feedback Details{% endblock title %} {% block content %}
         </p>
       </div>
       <span class="badge badge-{{ feedback.status }}"
-        >{{ feedback.status }}</span
-      >
+        >{{ feedback.status }}</span>
+
+        {% include "feedback/feedback_assign_form.html" with feedback=feedback %}
     </div>
 
     <p class="detail-lead">{{ feedback.message }}</p>

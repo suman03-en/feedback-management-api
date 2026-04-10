@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from django.urls import reverse
+from django.conf import settings
 
 
 class Feedback(models.Model):
@@ -28,6 +29,13 @@ class Feedback(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.message[:20]}..."
+
+    def assign_to_responder(self, responder):
+        """Assign this feedback to a responder."""
+        record, created = FeedbackResponderRecord.objects.get_or_create(
+            feedback=self, responder=responder
+        )
+        return record, created
 
 
 class Department(models.Model):
@@ -57,6 +65,31 @@ class FeedbackDepartment(models.Model):
         return f"{self.feedback.name} - {self.department.name}"
 
 
+class FeedbackResponderRecord(models.Model):
+    """Model representing the assignment of a feedback to a responder."""
+
+    feedback = models.ForeignKey(
+        Feedback, on_delete=models.CASCADE, related_name="feedback_responder_records"
+    )
+    responder = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="responder_records",
+    )
+    assigned_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["feedback", "responder"],
+                name="unique_feedback_responder_assignment",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.feedback} assigned to {self.responder}"
+
+
 class FeedbackResponse(models.Model):
     """Model representing a response to feedback."""
 
@@ -64,9 +97,12 @@ class FeedbackResponse(models.Model):
     feedback = models.ForeignKey(
         Feedback, on_delete=models.CASCADE, related_name="responses"
     )
-    responder_name = models.CharField(max_length=100)
+    responder = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, related_name="feedback_responses"
+    )
+
     responder_message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Response to {self.feedback.name} by {self.responder_name}"
+        return f"Response to {self.feedback.name} by {', '.join(str(user) for user in self.responder.all())}"

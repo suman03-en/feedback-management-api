@@ -1,0 +1,5 @@
+<form action="{% url "feedback_responder_assign" feedback.pk %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Assign</button>
+</form>

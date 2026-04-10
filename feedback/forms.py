@@ -1,6 +1,9 @@
 from django import forms
 from .models import Feedback, FeedbackResponse, Department
+from django.contrib.auth import get_user_model
 
+# Get the User model
+User = get_user_model()
 
 class FeedbackForm(forms.ModelForm):
 
@@ -28,7 +31,7 @@ class FeedbackResponseForm(forms.ModelForm):
 
     class Meta:
         model = FeedbackResponse
-        fields = ["responder_name", "responder_message"]
+        fields = ["responder", "responder_message"]
 
     def __init__(self, *args, feedback=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -48,3 +51,8 @@ class FeedbackResponseForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+    
+
+class FeedbackResponseAssignForm(forms.Form):
+    """Form for assigning feedback to a responder."""
+    responder = forms.ModelChoiceField(queryset=User.objects.filter(is_active=True), label="Assign to")

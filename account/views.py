@@ -34,6 +34,8 @@ class UserLoginView(View):
         if request.user.is_authenticated:
             return HttpResponse("User is already logged in")
         
+        next_url = request.GET.get("next")
+        
         form = self.get_form(request.POST)
         if form.is_valid():
             email = form.cleaned_data.get("email")
@@ -41,7 +43,7 @@ class UserLoginView(View):
             user = authenticate(email=email, password=password)
             if user:
                 login(request, user)
-                return HttpResponse(f"User {email} logged in successfully")
+                return redirect(next_url) if next_url else redirect("feedback_list")
             else:
                 form.add_error(None, "Invalid email or password")
         return render(request, self.template_name, {"form": form})
