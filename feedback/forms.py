@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 # Get the User model
 User = get_user_model()
 
+
 class FeedbackForm(forms.ModelForm):
 
     class Meta:
@@ -31,13 +32,13 @@ class FeedbackResponseForm(forms.ModelForm):
 
     class Meta:
         model = FeedbackResponse
-        fields = ["responder", "responder_message"]
+        fields = ["responder_message"]
 
     def __init__(self, *args, feedback=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.feedback = feedback
 
-    def save(self, commit=True):
+    def save(self, commit=True, responder=None):
         instance = super().save(commit=False)
         instance.feedback = self.feedback
 
@@ -50,9 +51,28 @@ class FeedbackResponseForm(forms.ModelForm):
 
         if commit:
             instance.save()
+            if responder is not None:
+                instance.responder.add(responder)
         return instance
-    
+
 
 class FeedbackResponseAssignForm(forms.Form):
     """Form for assigning feedback to a responder."""
-    responder = forms.ModelChoiceField(queryset=User.objects.filter(is_active=True), label="Assign to")
+
+    responder = forms.ModelChoiceField(
+        queryset=User.objects.none(),
+        label="Assign to",
+    )
+
+    def __init__(self, *args, feedback=None, assigner=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        queryset = User.objects.filter(is_active=True)
+
+        if feedback is not None:
+            department_names = feedback.to_departments.values_list("name", flat=True)
+            queryset = queryset.filter(department__in=department_names)
+
+        if assigner is not None and getattr(assigner, "is_staff", False):
+            queryset = queryset.exclude(pk=assigner.pk)
+
+        self.fields["responder"].queryset = queryset.distinct()

@@ -11,10 +11,10 @@ Feedback Details{% endblock title %} {% block content %}
           {{ feedback.created_at|date:"h:i A" }}.
         </p>
       </div>
-      <span class="badge badge-{{ feedback.status }}"
-        >{{ feedback.status }}</span>
+      <span class="badge badge-{{ feedback.status }}">{{ feedback.status }}</span>
 
-        {% include "feedback/feedback_assign_form.html" with feedback=feedback %}
+      {% if can_assign_feedback %} 
+      {% include "feedback/feedback_assign_form.html" with feedback=feedback %} {% endif %}
     </div>
 
     <p class="detail-lead">{{ feedback.message }}</p>
@@ -46,18 +46,15 @@ Feedback Details{% endblock title %} {% block content %}
       <a
         class="button button-primary"
         href="{% url 'feedback_response_create' feedback.pk %}"
-        >Respond</a
-      >
+        >Respond</a>
       <a
         class="button button-secondary"
         href="{% url 'feedback_response_list' feedback.pk %}"
-        >View responses</a
-      >
+        >View responses</a>
       <a
         class="button button-danger"
         href="{% url 'feedback_delete' feedback.pk %}"
-        >Delete</a
-      >
+        >Delete</a>
     </div>
   </article>
 

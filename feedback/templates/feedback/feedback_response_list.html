@@ -1,5 +1,5 @@
-{% extends "feedback/base.html" %} {% block title %}Responses for {{ feedback.name }}{% endblock title %} 
-{% block content %}
+{% extends "feedback/base.html" %} {% block title %}Responses for {{
+feedback.name }}{% endblock title %} {% block content %}
 <section class="card card-soft">
   <div class="section-heading">
     <div>
@@ -14,11 +14,13 @@
       <a
         class="button button-secondary"
         href="{% url 'feedback_detail' feedback.pk %}"
-        >Back to detail</a>
+        >Back to detail</a
+      >
       <a
         class="button button-primary"
         href="{% url 'feedback_response_create' feedback.pk %}"
-        >Add response</a>
+        >Add response</a
+      >
     </div>
   </div>
 </section>
@@ -29,10 +31,18 @@
     <article class="response-card">
       <div class="response-card-header">
         <div>
-            <a class="button-group" href="{% url 'feedback_response_edit' response.pk %}">Edit</a>
-            <a class="button-danger" href="{% url 'feedback_response_delete' response.pk %}">Delete</a>
+          <a
+            class="button-group"
+            href="{% url 'feedback_response_edit' response.pk %}"
+            >Edit</a
+          >
+          <a
+            class="button-danger"
+            href="{% url 'feedback_response_delete' response.pk %}"
+            >Delete</a
+          >
           <p class="eyebrow">{{ response.created_at|date:"M d, Y" }}</p>
-          <h3 class="card-title">{{ response.responder_name }}</h3>
+          <h3 class="card-title">{{ response.responder.all|join:", " }}</h3>
         </div>
         <span class="badge badge-reviewed">Reply</span>
       </div>

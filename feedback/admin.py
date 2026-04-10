@@ -10,7 +10,7 @@ class FeedbackAdmin(admin.ModelAdmin):
 
 class FeedbackResponseAdmin(admin.ModelAdmin):
     list_display = ("feedback", "responder_message", "created_at")
-    search_fields = ("responder_name", "responder_message")
+    search_fields = ("responder__name", "responder_message")
     list_filter = ("created_at",)
 
 
@@ -19,7 +19,7 @@ class DepartmentAdmin(admin.ModelAdmin):
     search_fields = ("name", "description")
 
 
-#register your models here
+# register your models here
 admin.site.register(Feedback, FeedbackAdmin)
 admin.site.register(FeedbackResponse, FeedbackResponseAdmin)
 admin.site.register(Department, DepartmentAdmin)

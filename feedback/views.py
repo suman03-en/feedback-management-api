@@ -23,6 +23,16 @@ from .forms import (
 from .mixins import FeedbackMixin
 
 
+def user_can_manage_feedback(feedback, user):
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    if not user.is_staff:
+        return False
+    return feedback.to_departments.filter(name=user.department).exists()
+
+
 class FeedbackListView(ListView):
     model = Feedback
     template_name = "feedback/feedback_list.html"
@@ -43,7 +53,17 @@ class FeedbackDetailView(DetailView):
     context_object_name = "feedback"
 
     def get_context_data(self, **kwargs):
-        return super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
+        feedback = context["feedback"]
+        context["can_assign_feedback"] = user_can_manage_feedback(
+            feedback, self.request.user
+        )
+        if context["can_assign_feedback"]:
+            context["assign_form"] = FeedbackResponseAssignForm(
+                feedback=feedback,
+                assigner=self.request.user,
+            )
+        return context
 
 
 class FeedbackCreateView(CreateView):
@@ -91,14 +111,9 @@ class FeedbackResponseCreateView(LoginRequiredMixin, CreateView):
         kwargs["feedback"] = self.feedback
         return kwargs
 
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        form.fields["responder"].queryset = (
-            form.fields["responder"]
-            .queryset.filter(responder_records__feedback=self.feedback)
-            .distinct()
-        )
-        return form
+    def form_valid(self, form):
+        self.object = form.save(responder=self.request.user)
+        return redirect(self.get_success_url())
 
 
 class FeedbackResponseListView(FeedbackMixin, ListView):
@@ -144,29 +159,35 @@ class FeedbackResponseDeleteView(DeleteView):
     success_url = reverse_lazy("feedback_list")
 
 
-class FeedbackResponseAssignView(View):
+class FeedbackResponseAssignView(LoginRequiredMixin, View):
     form_class = FeedbackResponseAssignForm
     template_name = "feedback/feedback_assign_form.html"
 
+    def dispatch(self, request, *args, **kwargs):
+        self.feedback = get_object_or_404(Feedback, pk=kwargs.get("pk"))
+        if not user_can_manage_feedback(self.feedback, request.user):
+            raise PermissionDenied("You are not allowed to assign this feedback.")
+        return super().dispatch(request, *args, **kwargs)
+
     def get(self, request, pk):
-        feedback = get_object_or_404(Feedback, pk=pk)
-        form = self.form_class()
+        form = self.form_class(feedback=self.feedback, assigner=request.user)
         return render(
             request,
             self.template_name,
-            {"form": form, "feedback": feedback},
+            {"form": form, "feedback": self.feedback},
         )
 
     def post(self, request, pk):
-        feedback = get_object_or_404(Feedback, pk=pk)
-        form = self.form_class(request.POST)
+        form = self.form_class(
+            request.POST, feedback=self.feedback, assigner=request.user
+        )
         if form.is_valid():
             responder = form.cleaned_data["responder"]
-            feedback.assign_to_responder(responder)
-            return redirect("feedback_response_list", pk=feedback.pk)
+            self.feedback.assign_to_responder(responder)
+            return redirect("feedback_response_list", pk=self.feedback.pk)
 
         return render(
             request,
             self.template_name,
-            {"form": form, "feedback": feedback},
+            {"form": form, "feedback": self.feedback},
         )
