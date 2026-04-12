@@ -49,8 +49,8 @@ class UserLoginView(View):
         return render(request, self.template_name, {"form": form})
     
 class UserLogoutView(View):
-    def get(self, request):
+    def post(self, request):
         if not request.user.is_authenticated:
             return HttpResponse("User is not logged in")
         logout(request)
-        return HttpResponse("User logged out successfully")
+        return redirect("user_login")

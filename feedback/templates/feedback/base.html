@@ -26,8 +26,15 @@
           {% if request.user.is_staff %}
             <a class="button button-secondary" href="{% url 'department_create' %}">Add Department</a>
           {% endif %}
+          <form action="{% url "user_logout" %}" method="post" style="display: inline;">
+            {% csrf_token %}
+            <button class="button button-secondary" type="submit">Logout</button>
+          </form>
           <div>
-            <p style="margin: 0; color: #7d7b7b;">Welcome, {{ user.name }}!</p>
+            {% if request.user.is_authenticated %}
+            <p style="margin: 0; color: #7d7b7b;">Welcome, {{ request.user.name }}!</p>
+            {% endif %}
+
           </div>
         </div>
         <a class="button button-primary" href="{% url 'feedback_create' %}"
