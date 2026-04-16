@@ -11,7 +11,7 @@ from django.views import View
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 
-from guardian.shortcuts import get_objects_for_user, assign_perm
+from guardian.shortcuts import get_objects_for_user, assign_perm # type: ignore
 
 from .models import (
     Feedback,
@@ -60,6 +60,13 @@ class FeedbackDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
     context_object_name = "feedback"
     permission_required = ["feedback.view_feedback"]
 
+    def get_object(self, queryset=None): 
+        obj = super().get_object(queryset)
+        if not self.request.user.has_perm("feedback.view_feedback", obj):
+            raise PermissionDenied
+        
+        return obj
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         #if user is superuser or has assign permission, show the assign form
@@ -69,10 +76,11 @@ class FeedbackDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
         return context
 
 
-class FeedbackCreateView(LoginRequiredMixin, CreateView):
+class FeedbackCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Feedback
     template_name = "feedback/feedback_form.html"
     form_class = FeedbackForm
+    permission_required = ["feedback.add_feedback"]
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
@@ -107,6 +115,19 @@ class FeedbackDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView
     template_name = "feedback/feedback_confirm_delete.html"
     success_url = reverse_lazy("feedback_list")
     permission_required = ["feedback.delete_feedback"]
+
+    def dispatch(self, request, *args, **kwargs):
+        # object level permission check to ensure user can only delete feedback they have permission for
+        from guardian.shortcuts import get_perms # type: ignore
+        print(get_perms(request.user, self.get_object()))
+        print(request.user.get_all_permissions())
+        if not request.user.has_perm("feedback.delete_feedback", self.get_object()):
+            raise PermissionDenied
+        
+        return super().dispatch(request, *args, **kwargs)
+    
+
+#left to refactor to use object level permission check
 
 class FeedbackResponseCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = FeedbackResponse
