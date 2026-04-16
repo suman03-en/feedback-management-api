@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django.contrib.auth.models import AbstractUser
 from feedback.models import Department
+from django.contrib.auth.models import Group
 
 class UserManager(BaseUserManager):
     """
@@ -55,6 +56,31 @@ class User(AbstractUser):
             raise PermissionError("Only superusers can promote users to staff.")
         self.is_staff = True
         self.save(update_fields=["is_staff"])
+
+    def promote_to_department_manager(self, by_user):
+        """Promote a user to department manager. Only superusers can perform this action."""
+        if not by_user.is_superuser:
+            raise PermissionError("Only superusers can promote users to department manager.")
+        if self.department is None:
+            raise ValueError("User must be assigned to a department before being promoted to department manager.")
+        
+        self.department.managers.add(self)
+        # add user to department manager group for permissions
+        department_manager_group, _ = Group.objects.get_or_create(name="Department Manager")
+        # check if user is already in the group to avoid duplicates
+        if not self.groups.filter(name="Department Manager").exists():
+            department_manager_group.user_set.add(self)
+            
+
+
+    def promote_to_auditor(self, by_user):
+        """Promote a user to auditor. Only superusers can perform this action."""
+        if not by_user.is_superuser:
+            raise PermissionError("Only superusers can promote users to auditor.")
+        if self.department is None:
+            raise ValueError("User must be assigned to a department before being promoted to auditor.")
+        
+        self.department.auditors.add(self)
 
     def __str__(self):
         return self.name
