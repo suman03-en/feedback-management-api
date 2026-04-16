@@ -79,14 +79,27 @@ class FeedbackCreateView(LoginRequiredMixin, CreateView):
         form.instance.email = self.request.user.email
         response = super().form_valid(form)
 
-        #user who created the feedback should have view permission to it
+        # Assign [view, change, delete] permissions to the creator for this feedback
         assign_owner_perms(self.request.user, self.object)
 
-        #department managers of the routed departments should have view permission to this feedback 
-        #and auditors of the routed departments should have view permission to this feedback
+        # Assign view permissions to the managers and auditors of the routed departments
+        self.assign_department_permissions(self.object)
 
-        
         return response
+    
+    def assign_department_permissions(self, feedback):
+        # get all routed departments for this feedback
+        departments = feedback.to_departments.all()
+
+        for department in departments:
+            #assign view permission to the managers of  the routed departments
+            for manager in department.managers.all():
+                assign_perm("feedback.view_feedback", manager, feedback)
+
+            #assign view permission to the auditors of  the routed departments
+            for auditor in department.auditors.all():
+                assign_perm("feedback.view_feedback", auditor, feedback)
+        
 
 
 class FeedbackDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
