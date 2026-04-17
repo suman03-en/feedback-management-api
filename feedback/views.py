@@ -116,15 +116,14 @@ class FeedbackDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView
     success_url = reverse_lazy("feedback_list")
     permission_required = ["feedback.delete_feedback"]
 
-    def dispatch(self, request, *args, **kwargs):
-        # object level permission check to ensure user can only delete feedback they have permission for
-        from guardian.shortcuts import get_perms # type: ignore
-        print(get_perms(request.user, self.get_object()))
-        print(request.user.get_all_permissions())
-        if not request.user.has_perm("feedback.delete_feedback", self.get_object()):
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+
+        if not self.request.user.has_perm("feedback.delete_feedback", obj):
             raise PermissionDenied
-        
-        return super().dispatch(request, *args, **kwargs)
+
+        return obj
     
 
 #left to refactor to use object level permission check
@@ -139,13 +138,6 @@ class FeedbackResponseCreateView(LoginRequiredMixin, PermissionRequiredMixin, Cr
     def get_feedback(self):
         """Helper method to retrieve the associated feedback based on the URL parameter."""
         return Feedback.objects.get(id=self.kwargs.get("pk"))
-
-    def dispatch(self, request, *args, **kwargs):
-        self.feedback = self.get_feedback()
-        if request.user.has_perms(["feedback.add_feedbackresponse"]):
-            return super().dispatch(request, *args, **kwargs)
-        else:
-            raise PermissionDenied("You are not assigned to this feedback.")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
