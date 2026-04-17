@@ -26,7 +26,7 @@ from .forms import (
 )
 from .mixins import FeedbackMixin
 from .permissions import (
-    get_feedback_queryset_for_user, sync_feedback_view_permissions,
+    assign_department_permissions,
     assign_owner_perms,
 )   
 
@@ -91,22 +91,10 @@ class FeedbackCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView
         assign_owner_perms(self.request.user, self.object)
 
         # Assign view permissions to the managers and auditors of the routed departments
-        self.assign_department_permissions(self.object)
+        assign_department_permissions(self.object)
 
         return response
     
-    def assign_department_permissions(self, feedback):
-        # get all routed departments for this feedback
-        departments = feedback.to_departments.all()
-
-        for department in departments:
-            #assign view permission to the managers of  the routed departments
-            for manager in department.managers.all():
-                assign_perm("feedback.view_feedback", manager, feedback)
-
-            #assign view permission to the auditors of  the routed departments
-            for auditor in department.auditors.all():
-                assign_perm("feedback.view_feedback", auditor, feedback)
         
 
 
@@ -125,8 +113,6 @@ class FeedbackDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView
 
         return obj
     
-
-#left to refactor to use object level permission check
 
 class FeedbackResponseCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = FeedbackResponse
@@ -150,7 +136,7 @@ class FeedbackResponseCreateView(LoginRequiredMixin, PermissionRequiredMixin, Cr
         return kwargs
 
     def form_valid(self, form):
-        self.object = form.save(responder=self.request.user)
+        form.instance.responder.add(self.request.user)
         return redirect(self.get_success_url())
 
 
