@@ -1,8 +1,7 @@
 from importlib import import_module
 from typing import TYPE_CHECKING
 
-from django.contrib.auth import get_user_model
-from django.db.models import QuerySet
+from django.core.exceptions import ImproperlyConfigured
 
 if TYPE_CHECKING:
     from .models import Feedback
@@ -43,19 +42,34 @@ def assign_owner_perms(user, obj, perms=None):
 
     assign_many_perms(default_perms, user, obj)
 
-def assign_department_permissions(feedback):
+def assign_department_permissions(feedback=None, response=None):
     # get all routed departments for this object, can be feedback or feedback response
     shortcuts = _guardian_shortcuts()
     assign_perm = shortcuts.assign_perm
 
-    departments = feedback.to_departments.all()
+    if feedback:
+        object = feedback
+        departments = feedback.to_departments.all()
+    elif response:
+        object = response
+        departments = response.feedback.to_departments.all()
+    else:
+        return ImproperlyConfigured("Either feedback or response must be provided to assign department permissions.")
 
     for department in departments:
         #assign view permission to the managers of  the routed departments
         for manager in department.managers.all():
-            assign_perm("feedback.view_feedback", manager, feedback)
+            assign_perm("feedback.view_feedback", manager, object)
 
         #assign view permission to the auditors of  the routed departments
         for auditor in department.auditors.all():
-            assign_perm("feedback.view_feedback", auditor, feedback)
+            assign_perm("feedback.view_feedback", auditor, object)
+
+def assign_permission_creator_of_feedback_to_response(response, feedback):
+    """ Assign object level permissions for the creator of the feedback to the feedback response. This is used when a feedback response is created, to ensure that the creator of the feedback has permissions to view the response."""
+    shortcuts = _guardian_shortcuts()
+    assign_perm = shortcuts.assign_perm
+
+    creator = feedback.creator
+    assign_perm("feedback.view_feedbackresponse", creator, response)
 

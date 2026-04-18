@@ -29,6 +29,7 @@ from .mixins import FeedbackMixin
 from .permissions import (
     assign_department_permissions,
     assign_owner_perms,
+    assign_permission_creator_of_feedback_to_response,
 )   
 
 
@@ -92,7 +93,7 @@ class FeedbackCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView
         assign_owner_perms(self.request.user, self.object)
 
         # Assign view permissions to the managers and auditors of the routed departments
-        assign_department_permissions(self.object)
+        assign_department_permissions(feedback=self.object)
 
         return response
     
@@ -151,16 +152,17 @@ class FeedbackResponseCreateView(LoginRequiredMixin, PermissionRequiredMixin, Cr
         form.instance.responder.add(self.request.user)
 
         assign_owner_perms(self.request.user, self.object)
-        #it takes feedback and extract department from it
-        assign_department_permissions(self.object.feedback)
+        assign_department_permissions(response==self.object)
+        assign_permission_creator_of_feedback_to_response(self.object, self.feedback)
 
         return response
     
 
-class FeedbackResponseListView(LoginRequiredMixin, FeedbackMixin, ListView):
+class FeedbackResponseListView(LoginRequiredMixin, PermissionRequiredMixin, FeedbackMixin, ListView):
     model = FeedbackResponse
     template_name = "feedback/feedback_response_list.html"
     context_object_name = "responses"
+    permission_required = ["feedback.view_feedbackresponse"]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -179,11 +181,12 @@ class FeedbackResponseListView(LoginRequiredMixin, FeedbackMixin, ListView):
         )
 
 
-class FeedbackResponseEditView(LoginRequiredMixin, UpdateView):
+class FeedbackResponseEditView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = FeedbackResponse
     template_name = "feedback/feedback_response_form.html"
     form_class = FeedbackResponseForm
     pk_url_kwarg = "pk"
+    permission_required = ["feedback.change_feedbackresponse"]
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -194,16 +197,17 @@ class FeedbackResponseEditView(LoginRequiredMixin, UpdateView):
         return reverse("feedback_response_list", kwargs={"pk": self.object.feedback.pk})
 
 
-class FeedbackResponseDeleteView(LoginRequiredMixin, DeleteView):
+class FeedbackResponseDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = FeedbackResponse
     template_name = "feedback/feedback_response_confirm_delete.html"
     success_url = reverse_lazy("feedback_list")
+    permission_required = ["feedback.delete_feedbackresponse"]
 
 
 class FeedbackResponseAssignView(LoginRequiredMixin, PermissionRequiredMixin, View):
     form_class = FeedbackResponseAssignForm
     template_name = "feedback/feedback_assign_form.html"
-    permission_required = "feedback.assign_feedback"
+    permission_required = ["feedback.assign_feedback"]
 
     def _get_feedback(self):
         self.feedback = get_object_or_404(Feedback, pk=self.kwargs.get("pk"))
@@ -251,4 +255,4 @@ class DepartmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateVi
     template_name = "feedback/department_form.html"
     fields = ["name", "description"]
     success_url = reverse_lazy("feedback_list")
-    permission_required = "feedback.add_department"
+    permission_required = ["feedback.add_department"]
