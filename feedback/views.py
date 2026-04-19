@@ -245,7 +245,9 @@ class FeedbackResponseAssignView(LoginRequiredMixin, PermissionRequiredMixin, Vi
         if form.is_valid():
             responder = form.cleaned_data["responder"]
             try:
-                self.feedback.assign_to_responder(responder)
+                _, created = self.feedback.assign_to_responder(responder)
+                if created: 
+                    assign_perm("feedback.view_feedback", responder, self.feedback)
             except ValueError as e:
                 form.add_error(None, str(e))
                 return render(
@@ -253,8 +255,7 @@ class FeedbackResponseAssignView(LoginRequiredMixin, PermissionRequiredMixin, Vi
                     self.template_name,
                     {"form": form, "feedback": self.feedback},
                 )
-            return redirect("feedback_response_list", pk=self.feedback.pk)
-
+            return redirect("feedback_response_list", pk=pk)
         return render(
             request,
             self.template_name,

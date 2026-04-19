@@ -1,10 +1,10 @@
-{% extends "feedback/base.html" %} {% block title %}Responses for {{
-feedback.name }}{% endblock title %} {% block content %}
+{% extends "feedback/base.html" %} 
+{% block title %}Responses for {{feedback.message|truncatewords:10 }}{% endblock title %} {% block content %}
 <section class="card card-soft">
   <div class="section-heading">
     <div>
       <p class="eyebrow">Conversation history</p>
-      <h2 class="section-title">Responses for {{ feedback.name }}</h2>
+      <h2 class="section-title">Responses for <i>{{ feedback.message }}</i></h2>
       <p class="section-subtitle">
         Review every reply associated with this request in chronological
         context.

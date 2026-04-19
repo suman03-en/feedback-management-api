@@ -26,13 +26,15 @@
           {% if perms.feedback.add_department %}
             <a class="button button-secondary" href="{% url 'department_create' %}">Add Department</a>
           {% endif %}
-          <form action="{% url "user_logout" %}" method="post" style="display: inline;">
-            {% csrf_token %}
-            <button class="button button-secondary" type="submit">Logout</button>
-          </form>
           <div>
             {% if request.user.is_authenticated %}
             <p style="margin: 0; color: #7d7b7b;">Welcome, {{ request.user.name }}!</p>
+            <form action="{% url "user_logout" %}" method="post" style="display: inline;">
+            {% csrf_token %}
+            <button class="button button-secondary" type="submit">Logout</button>
+            </form>
+            {% else %}
+            <a class="button button-secondary" href="{% url 'user_login' %}">Login</a>
             {% endif %}
 
           </div>

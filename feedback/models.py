@@ -35,7 +35,7 @@ class Feedback(models.Model):
 
     def assign_to_responder(self, responder):
         """Assign this feedback to a responder."""
-        if not responder.groups.filter(name="Feedback Responders").exists():
+        if not responder.groups.filter(name="Responder").exists():
             raise ValueError("User must be in the 'Feedback Responders' group to be assigned as a responder.")
         
         record, created = FeedbackResponderRecord.objects.get_or_create(
