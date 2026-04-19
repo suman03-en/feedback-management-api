@@ -187,6 +187,12 @@ class FeedbackResponseEditView(LoginRequiredMixin, PermissionRequiredMixin, Upda
     pk_url_kwarg = "pk"
     permission_required = ["feedback.change_feedbackresponse"]
 
+    def get_object(self, queryset = None):
+        obj = super().get_object(queryset)
+        if not self.request.user.has_perm("feedback.change_feedbackresponse", obj):
+            raise PermissionDenied
+        return obj
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["feedback"] = self.object.feedback
@@ -203,6 +209,12 @@ class FeedbackResponseDeleteView(
     template_name = "feedback/feedback_response_confirm_delete.html"
     success_url = reverse_lazy("feedback_list")
     permission_required = ["feedback.delete_feedbackresponse"]
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        if not self.request.user.has_perm("feedback.delete_feedbackresponse", obj):
+            raise PermissionDenied
+        return obj
 
 
 class FeedbackResponseAssignView(LoginRequiredMixin, PermissionRequiredMixin, View):
