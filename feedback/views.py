@@ -149,7 +149,7 @@ class FeedbackResponseCreateView(
         form.instance.responder.add(self.request.user)
 
         assign_owner_perms(self.request.user, self.object)
-        assign_department_permissions(response == self.object)
+        assign_department_permissions(response=self.object)
         assign_permission_creator_of_feedback_to_response(self.object, self.feedback)
 
         return response
@@ -187,7 +187,7 @@ class FeedbackResponseEditView(LoginRequiredMixin, PermissionRequiredMixin, Upda
     pk_url_kwarg = "pk"
     permission_required = ["feedback.change_feedbackresponse"]
 
-    def get_object(self, queryset = None):
+    def get_object(self, queryset=None):
         obj = super().get_object(queryset)
         if not self.request.user.has_perm("feedback.change_feedbackresponse", obj):
             raise PermissionDenied
@@ -246,7 +246,7 @@ class FeedbackResponseAssignView(LoginRequiredMixin, PermissionRequiredMixin, Vi
             responder = form.cleaned_data["responder"]
             try:
                 _, created = self.feedback.assign_to_responder(responder)
-                if created: 
+                if created:
                     assign_perm("feedback.view_feedback", responder, self.feedback)
             except ValueError as e:
                 form.add_error(None, str(e))
