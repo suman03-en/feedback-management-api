@@ -8,13 +8,13 @@ media/
 *.log
 *.env
 .env
+plan.md
 **/__pycache__/
 */__pycache__/
 /__pycache__/
 **/migrations/
 */migrations/
 /migrations/
-
 
 *.py[cod]
 *$py.class

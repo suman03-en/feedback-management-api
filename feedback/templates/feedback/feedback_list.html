@@ -41,7 +41,7 @@
       <div class="feedback-card-header">
         <div>
           <p class="eyebrow">#{{ forloop.counter }}</p>
-          <h3 class="feedback-title">{{ feedback.name }}</h3>
+          <h3 class="feedback-title">{{ feedback.message|truncatechars:60 }}</h3>
           <p class="feedback-summary">
             {{ feedback.message|truncatechars:150 }}
           </p>
