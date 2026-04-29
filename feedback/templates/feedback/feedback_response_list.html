@@ -33,24 +33,21 @@
     <article class="response-card">
       <div class="response-card-header">
         <div>
-          {% if perms.feedback.change_feedbackresponse %}
-          <a
-            class="button-group"
-            href="{% url 'feedback_response_edit' response.pk %}"
-            >Edit</a
-          >
-          {% endif %}
-          {% if perms.feedback.delete_feedbackresponse %}
-          <a
-            class="button-danger"
-            href="{% url 'feedback_response_delete' response.pk %}"
-            >Delete</a
-          >
-          {% endif %}
           <p class="eyebrow">{{ response.created_at|date:"M d, Y" }}</p>
           <h3 class="card-title">{{ response.responder.all|join:", " }}</h3>
+          <div class="inline-meta">
+            <span class="meta-pill">Reply</span>
+            <span class="meta-pill">{{ response.created_at|date:"h:i A" }}</span>
+          </div>
         </div>
-        <span class="badge badge-reviewed">Reply</span>
+        <div class="button-group">
+          {% if perms.feedback.change_feedbackresponse %}
+          <a class="button button-secondary" href="{% url 'feedback_response_edit' response.pk %}">Edit</a>
+          {% endif %}
+          {% if perms.feedback.delete_feedbackresponse %}
+          <a class="button button-danger" href="{% url 'feedback_response_delete' response.pk %}">Delete</a>
+          {% endif %}
+        </div>
       </div>
       <p class="response-text">{{ response.responder_message }}</p>
     </article>

@@ -1,5 +1,9 @@
-<form action="{% url "feedback_responder_assign" feedback.pk %}" method="post">
+<form action="{% url 'feedback_responder_assign' feedback.pk %}" method="post" class="stacked-form inline-form">
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Assign</button>
+    <div class="field-block full-width">
+        <label for="id_responder">{{ form.responder.label }}</label>
+        {{ form.responder }}
+        {{ form.responder.errors }}
+    </div>
+    <button class="button button-secondary" type="submit">Assign</button>
 </form>

@@ -11,56 +11,44 @@
     </div>
   </div>
 
-  <form method="post">
-    {% csrf_token %} {{ form.as_p }}
+  <form method="post" class="stacked-form">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="form-alert" role="alert">
+      {{ form.non_field_errors }}
+    </div>
+    {% endif %}
+
+    <div class="form-grid two-col">
+      <div class="field-block">
+        <label for="id_title">{{ form.title.label }}</label>
+        {{ form.title }}
+        {{ form.title.errors }}
+      </div>
+      <div class="field-block">
+        <label for="id_priority">{{ form.priority.label }}</label>
+        {{ form.priority }}
+        {{ form.priority.errors }}
+      </div>
+      <div class="field-block full-width">
+        <label for="id_category">{{ form.category.label }}</label>
+        {{ form.category }}
+        {{ form.category.errors }}
+      </div>
+      <div class="field-block full-width">
+        <label for="id_message">{{ form.message.label }}</label>
+        {{ form.message }}
+        {{ form.message.errors }}
+      </div>
+      <div class="field-block full-width">
+        <label for="id_to_departments">{{ form.to_departments.label }}</label>
+        {{ form.to_departments }}
+        <div class="helper-text">{{ form.to_departments.help_text }}</div>
+        {{ form.to_departments.errors }}
+      </div>
+    </div>
+
     <button class="button button-primary" type="submit">Submit feedback</button>
   </form>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const anonymousField = document.getElementById("id_is_anonymous");
-      const nameField = document.getElementById("id_name");
-      const emailField = document.getElementById("id_email");
-      const nameFieldRow = nameField ? nameField.closest("p") : null;
-      const emailFieldRow = emailField ? emailField.closest("p") : null;
-
-      if (!anonymousField || !nameField || !emailField) return;
-
-      function toggleIdentityFields() {
-        const isAnonymous = anonymousField.checked;
-
-        nameField.disabled = isAnonymous;
-        emailField.disabled = isAnonymous;
-        nameField.classList.toggle("is-disabled-ui", isAnonymous);
-        emailField.classList.toggle("is-disabled-ui", isAnonymous);
-
-        if (nameFieldRow)
-          nameFieldRow.classList.toggle("is-disabled-field", isAnonymous);
-        if (emailFieldRow)
-          emailFieldRow.classList.toggle("is-disabled-field", isAnonymous);
-
-        if (isAnonymous) {
-          nameField.dataset.wasRequired = nameField.required ? "true" : "false";
-          emailField.dataset.wasRequired = emailField.required
-            ? "true"
-            : "false";
-
-          nameField.required = false;
-          emailField.required = false;
-
-          nameField.value = "";
-          emailField.value = "";
-        } else {
-          if (nameField.dataset.wasRequired === "true")
-            nameField.required = true;
-          if (emailField.dataset.wasRequired === "true")
-            emailField.required = true;
-        }
-      }
-
-      anonymousField.addEventListener("change", toggleIdentityFields);
-      toggleIdentityFields();
-    });
-  </script>
 </section>
 {% endblock content %}

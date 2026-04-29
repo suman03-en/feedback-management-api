@@ -21,11 +21,17 @@
       <p class="feedback-summary">{{ feedback.message }}</p>
     </div>
 
-    <form
-      action="{% if feedbackresponse %}
-      {% url 'feedback_response_edit' feedbackresponse.pk %}{% else %}
-      {% url 'feedback_response_create' feedback.pk %}{% endif %}" method="post">
-      {% csrf_token %} {{ form.as_p }}
+    <form action="{% if feedbackresponse %}{% url 'feedback_response_edit' feedbackresponse.pk %}{% else %}{% url 'feedback_response_create' feedback.pk %}{% endif %}" method="post" class="stacked-form">
+      {% csrf_token %}
+      <div class="field-block full-width">
+        <label for="id_responder_message">{{ form.responder_message.label }}</label>
+        {{ form.responder_message }}
+        {{ form.responder_message.errors }}
+      </div>
+      <div class="field-block checkbox-block">
+        <label for="id_resolve">{{ form.resolve }} {{ form.resolve.label }}</label>
+        {{ form.resolve.errors }}
+      </div>
       <div class="form-help">
         Mark the item as resolved only when the issue is fully closed. Otherwise
         it will be moved to reviewed.

@@ -14,11 +14,19 @@ Feedback Details{% endblock title %} {% block content %}
           Submitted on {{ feedback.created_at|date:"M d, Y" }} at 
           {{ feedback.created_at|date:"h:i A" }}.
         </p>
+        <div class="inline-meta">
+          <span class="meta-pill">{{ feedback.priority|title }} priority</span>
+          <span class="meta-pill">{{ feedback.category|default:"Uncategorized" }}</span>
+          <span class="meta-pill">{{ response_count }} responses</span>
+        </div>
       </div>
       <span class="badge badge-{{ feedback.status }}">{{ feedback.status }}</span>
 
       {% if perms.feedback.assign_feedback %}
-      {% include "feedback/feedback_assign_form.html" with feedback=feedback form=assign_form %}
+      <div class="inline-panel">
+        <p class="meta-label">Quick assignment</p>
+        {% include "feedback/feedback_assign_form.html" with feedback=feedback form=assign_form %}
+      </div>
       {% endif %}
     </div>
 
@@ -29,6 +37,12 @@ Feedback Details{% endblock title %} {% block content %}
         <p class="meta-label">Sender</p>
         <p class="meta-value">{{ feedback.creator.name }}</p>
         <p class="meta">{{ feedback.email }}</p>
+      </div>
+
+      <div class="meta-block">
+        <p class="meta-label">Priority</p>
+        <p class="meta-value">{{ feedback.priority|title }}</p>
+        <p class="meta">Current workflow status: {{ feedback.status|title }}</p>
       </div>
 
       <div class="meta-block">
@@ -46,6 +60,13 @@ Feedback Details{% endblock title %} {% block content %}
         {% endif %}
       </div>
     </div>
+
+    {% if feedback.category %}
+    <div class="meta-block detail-category">
+      <p class="meta-label">Category</p>
+      <p class="meta-value">{{ feedback.category.name }}</p>
+    </div>
+    {% endif %}
 
     <div class="actions">
       {% if perms.feedback.add_feedbackresponse %}
@@ -77,12 +98,18 @@ Feedback Details{% endblock title %} {% block content %}
     </p>
     <div class="detail-meta-grid">
       <div class="meta-block">
-        <p class="meta-label">Current status</p>
-        <p class="meta-value">{{ feedback.status|title }}</p>
+        <p class="meta-label">Responses</p>
+        <p class="meta-value">{{ response_count }}</p>
       </div>
       <div class="meta-block">
         <p class="meta-label">Created</p>
         <p class="meta-value">{{ feedback.created_at|date:"F j, Y" }}</p>
+      </div>
+    </div>
+    <div class="detail-meta-grid">
+      <div class="meta-block">
+        <p class="meta-label">Current status</p>
+        <p class="meta-value">{{ feedback.status|title }}</p>
       </div>
     </div>
   </aside>

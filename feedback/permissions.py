@@ -61,14 +61,18 @@ def assign_department_permissions(feedback=None, response=None):
             "Either feedback or response must be provided to assign department permissions."
         )
 
+    feedback_view_perm = (
+        "feedback.view_feedbackresponse" if response else "feedback.view_feedback"
+    )
+
     for department in departments:
         # assign view permission to the managers of  the routed departments
         for manager in department.managers.all():
-            assign_perm("feedback.view_feedback", manager, object)
+            assign_perm(feedback_view_perm, manager, object)
 
         # assign view permission to the auditors of  the routed departments
         for auditor in department.auditors.all():
-            assign_perm("feedback.view_feedback", auditor, object)
+            assign_perm(feedback_view_perm, auditor, object)
 
 
 def assign_permission_creator_of_feedback_to_response(response, feedback):
@@ -78,4 +82,3 @@ def assign_permission_creator_of_feedback_to_response(response, feedback):
 
     creator = feedback.creator
     assign_perm("feedback.view_feedbackresponse", creator, response)
-

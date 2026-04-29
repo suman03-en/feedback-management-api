@@ -20,24 +20,29 @@
   <body>
     <div class="page-shell">
       <header class="topbar">
-        <div>
+        <div class="topbar-copy">
           <p class="eyebrow">Feedback management system</p>
           <h1>Feedback Hub</h1>
+          <p class="topbar-note">
+            Route requests, capture responses, and keep the queue readable for each team.
+          </p>
+        </div>
+        <div class="topbar-actions">
           {% if perms.feedback.add_department %}
-            <a class="button button-secondary" href="{% url 'department_create' %}">Add Department</a>
+          <a class="button button-secondary" href="{% url 'department_create' %}">Add department</a>
           {% endif %}
-          <div>
-            {% if request.user.is_authenticated %}
-            <p style="margin: 0; color: #7d7b7b;">Welcome, {{ request.user.name }}!</p>
-            <form action="{% url "user_logout" %}" method="post" style="display: inline;">
+          {% if request.user.is_authenticated %}
+          <div class="user-pill">
+            <span class="user-pill-label">Signed in as</span>
+            <strong>{{ request.user.name }}</strong>
+          </div>
+          <form action="{% url 'user_logout' %}" method="post">
             {% csrf_token %}
             <button class="button button-secondary" type="submit">Logout</button>
-            </form>
-            {% else %}
-            <a class="button button-secondary" href="{% url 'user_login' %}">Login</a>
-            {% endif %}
-
-          </div>
+          </form>
+          {% else %}
+          <a class="button button-secondary" href="{% url 'user_login' %}">Login</a>
+          {% endif %}
         </div>
         {% if perms.feedback.add_feedback %}
         <a class="button button-primary" href="{% url 'feedback_create' %}"

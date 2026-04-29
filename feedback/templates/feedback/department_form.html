@@ -3,10 +3,28 @@
 {% block title %}Add Department{% endblock title %}
 
 {% block content %}
-    <h2>Add Department</h2>
-    <form method="post">
+<section class="card form-card">
+    <div class="form-header">
+        <div>
+            <p class="eyebrow">Department setup</p>
+            <h2 class="section-title">Add department</h2>
+            <p class="section-subtitle">Create a routing target so feedback can be distributed to the right team.</p>
+        </div>
+    </div>
+
+    <form method="post" class="stacked-form">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Add Department</button>
+        <div class="field-block full-width">
+            <label for="id_name">{{ form.name.label }}</label>
+            {{ form.name }}
+            {{ form.name.errors }}
+        </div>
+        <div class="field-block full-width">
+            <label for="id_description">{{ form.description.label }}</label>
+            {{ form.description }}
+            {{ form.description.errors }}
+        </div>
+        <button class="button button-primary" type="submit">Add department</button>
     </form>
+</section>
 {% endblock content %}

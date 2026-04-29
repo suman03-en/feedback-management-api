@@ -11,6 +11,7 @@ from django.views import View
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404
 from django.urls import reverse_lazy, reverse
+from django.db.models import Q
 
 from guardian.shortcuts import get_objects_for_user, assign_perm  # type: ignore
 
@@ -19,6 +20,7 @@ from .models import (
     FeedbackResponse,
     FeedbackResponderRecord,
     Department,
+    Category,
 )
 from .forms import (
     FeedbackForm,
@@ -38,9 +40,10 @@ class FeedbackListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     template_name = "feedback/feedback_list.html"
     context_object_name = "feedbacks"
     permission_required = ["feedback.view_feedback"]
+    paginate_by = 6
 
     def get_queryset(self):
-        return get_objects_for_user(
+        queryset = get_objects_for_user(
             self.request.user,
             "feedback.view_feedback",
             klass=Feedback,
@@ -48,11 +51,50 @@ class FeedbackListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
             accept_global_perms=False,
         )
 
+        search_term = self.request.GET.get("q", "").strip()
+        selected_status = self.request.GET.get("status", "")
+        selected_priority = self.request.GET.get("priority", "")
+        selected_category = self.request.GET.get("category", "")
+
+        if search_term:
+            queryset = queryset.filter(
+                Q(title__icontains=search_term)
+                | Q(message__icontains=search_term)
+                | Q(creator__name__icontains=search_term)
+            )
+
+        if selected_status in dict(Feedback.status_choices):
+            queryset = queryset.filter(status=selected_status)
+
+        if selected_priority in dict(Feedback.PRIORITY_CHOICES):
+            queryset = queryset.filter(priority=selected_priority)
+
+        if selected_category:
+            queryset = queryset.filter(category__id=selected_category)
+
+        return (
+            queryset.select_related("creator", "category")
+            .prefetch_related("to_departments")
+            .order_by("-created_at")
+        )
+
     def get(self, request, *args, **kwargs):
         if not request.user.has_perm("feedback.view_feedback"):
             raise PermissionDenied("You do not have permission to view feedback.")
 
         return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["search_term"] = self.request.GET.get("q", "").strip()
+        context["selected_status"] = self.request.GET.get("status", "")
+        context["selected_priority"] = self.request.GET.get("priority", "")
+        context["selected_category"] = self.request.GET.get("category", "")
+        context["status_choices"] = Feedback.status_choices
+        context["priority_choices"] = Feedback.PRIORITY_CHOICES
+        context["category_choices"] = Category.objects.order_by("name")
+        context["total_feedback_count"] = self.get_queryset().count()
+        return context
 
 
 class FeedbackDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView):
@@ -71,6 +113,7 @@ class FeedbackDetailView(LoginRequiredMixin, PermissionRequiredMixin, DetailView
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["assign_form"] = FeedbackResponseAssignForm()
+        context["response_count"] = self.object.responses.count()
         return context
 
 

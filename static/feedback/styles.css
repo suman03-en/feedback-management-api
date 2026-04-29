@@ -64,6 +64,41 @@ a {
   box-shadow: var(--shadow);
 }
 
+.topbar-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.topbar-note {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.user-pill {
+  display: grid;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: rgba(15, 118, 110, 0.08);
+  border: 1px solid rgba(15, 118, 110, 0.14);
+}
+
+.user-pill-label {
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 .eyebrow {
   margin: 0 0 8px;
   font-size: 0.86rem;
@@ -87,6 +122,56 @@ a {
 .content-grid {
   display: grid;
   gap: 22px;
+}
+
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.92fr) minmax(0, 1.6fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.dashboard-rail,
+.dashboard-main {
+  display: grid;
+  gap: 18px;
+}
+
+.dashboard-rail {
+  position: sticky;
+  top: 22px;
+  align-self: start;
+}
+
+.rail-panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  background: #f8fbff;
+  border: 1px solid var(--border);
+}
+
+.rail-hero {
+  background: linear-gradient(180deg, rgba(15, 118, 110, 0.07), rgba(255, 255, 255, 0.9));
+}
+
+.rail-actions {
+  margin-top: 2px;
+}
+
+.rail-stat-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.compact-stat {
+  padding: 14px 16px;
+}
+
+.rail-form {
+  display: grid;
+  gap: 14px;
 }
 
 .card {
@@ -135,6 +220,35 @@ a {
   line-height: 1.6;
 }
 
+.filter-card {
+  padding-top: 22px;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+.filter-field {
+  display: grid;
+  gap: 8px;
+}
+
+.filter-field label,
+.field-block label {
+  font-weight: 700;
+}
+
+.filter-wide {
+  grid-column: span 1;
+}
+
+.filter-actions {
+  grid-column: 1 / -1;
+}
+
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -177,6 +291,28 @@ a {
 
 .feedback-card {
   padding: 20px;
+}
+
+.inline-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #eef4fb;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.card-chip-list {
+  margin-top: 14px;
 }
 
 .feedback-card:hover,
@@ -248,6 +384,14 @@ a {
   gap: 22px;
 }
 
+.inline-panel {
+  margin-top: 10px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: #f8fbff;
+  border: 1px solid var(--border);
+}
+
 .detail-card,
 .sidebar-card,
 .form-card,
@@ -266,6 +410,10 @@ a {
   display: grid;
   gap: 14px;
   margin-top: 22px;
+}
+
+.detail-category {
+  margin-top: 14px;
 }
 
 .meta-block {
@@ -364,6 +512,38 @@ form {
   gap: 18px;
 }
 
+.stacked-form {
+  gap: 16px;
+}
+
+.form-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.form-grid.two-col {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field-block {
+  display: grid;
+  gap: 8px;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.checkbox-block label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkbox-block input {
+  width: auto;
+}
+
 form p {
   margin: 0;
   display: grid;
@@ -443,6 +623,25 @@ form .button {
   color: var(--muted);
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.pagination-label {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.queue-header-card {
+  padding-bottom: 18px;
+}
+
 .response-card {
   padding: 20px;
 }
@@ -465,10 +664,18 @@ form .button {
 }
 
 @media (max-width: 900px) {
+
+  .dashboard-layout,
   .detail-layout,
   .card-grid.two-col,
-  .stat-grid {
+  .stat-grid,
+  .filter-grid,
+  .form-grid.two-col {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-rail {
+    position: static;
   }
 
   .topbar,
@@ -497,6 +704,12 @@ form .button {
   .danger-card {
     padding: 20px;
     border-radius: 20px;
+  }
+
+  .pagination,
+  .topbar-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .actions,

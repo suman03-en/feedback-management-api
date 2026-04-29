@@ -1,16 +1,65 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'account/register.css' %}">
 </head>
 <body>
-    <h1>Login</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Login</button>
-    </form>
+    <main class="page auth-page">
+        <section class="auth-shell">
+            <aside class="auth-copy">
+                <p class="eyebrow">Feedback hub</p>
+                <h1 id="login-title">Welcome back</h1>
+                <p>
+                    Sign in to review feedback, respond to requests, and keep the queue moving.
+                </p>
+                <ul class="feature-list">
+                    <li class="feature-card">See your assigned queue at a glance.</li>
+                    <li class="feature-card">Route feedback to the right department faster.</li>
+                    <li class="feature-card">Track responses and resolution status in one place.</li>
+                </ul>
+            </aside>
+
+            <section class="card auth-card" aria-labelledby="login-title">
+                <header class="card-header">
+                    <h2>Login</h2>
+                    <p>Use your work email to access the feedback workspace.</p>
+                </header>
+
+                <form method="post" class="register-form" novalidate>
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                    <div class="form-alert" role="alert">
+                        {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% for field in form %}
+                    <div class="form-group {% if field.errors %}has-error{% endif %}">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                        <div class="field-errors">
+                            {% for error in field.errors %}
+                            <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+
+                    <button type="submit" class="submit-btn">Login</button>
+                </form>
+            </section>
+        </section>
+    </main>
 </body>
 </html>
