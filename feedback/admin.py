@@ -3,8 +3,8 @@ from .models import Feedback, FeedbackResponse, Department, FeedbackResponderRec
 
 
 class FeedbackAdmin(admin.ModelAdmin):
-    list_display = ("creator", "email", "message", "created_at")
-    search_fields = ("creator", "email", "message")
+    list_display = ("creator", "email", "title", "priority", "message", "created_at")
+    search_fields = ("creator__name", "email", "message", "title")
     list_filter = ("created_at",)
 
 
@@ -23,6 +23,7 @@ class FeedbackResponderRecordAdmin(admin.ModelAdmin):
     list_display = ("feedback", "responder", "assigned_at")
     search_fields = ("feedback__message", "responder__name")
     list_filter = ("assigned_at",)
+
 
 # register your models here
 admin.site.register(Feedback, FeedbackAdmin)

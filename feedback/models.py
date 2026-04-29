@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.conf import settings
 from .permissions import assign_many_perms
 
+
 class Feedback(models.Model):
     """Model representing user feedback."""
 
@@ -21,6 +22,22 @@ class Feedback(models.Model):
     )
     email = models.EmailField(blank=True, null=True)
     message = models.TextField()
+    title = models.CharField(max_length=200, blank=True)
+    PRIORITY_CHOICES = [
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+    ]
+    priority = models.CharField(
+        max_length=10, choices=PRIORITY_CHOICES, default="medium"
+    )
+    category = models.ForeignKey(
+        "Category",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="feedbacks",
+    )
     status = models.CharField(max_length=20, choices=status_choices, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)
     to_departments = models.ManyToManyField(
@@ -36,13 +53,15 @@ class Feedback(models.Model):
     def assign_to_responder(self, responder):
         """Assign this feedback to a responder."""
         if not responder.groups.filter(name="Responder").exists():
-            raise ValueError("User must be in the 'Feedback Responders' group to be assigned as a responder.")
-        
+            raise ValueError(
+                "User must be in the 'Feedback Responders' group to be assigned as a responder."
+            )
+
         record, created = FeedbackResponderRecord.objects.get_or_create(
             feedback=self, responder=responder
         )
         return record, created
-    
+
     class Meta:
         permissions = [
             ("assign_feedback", "Can assign feedback to responders"),
@@ -58,15 +77,21 @@ class Department(models.Model):
     description = models.TextField(blank=True)
 
     managers = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,
-        related_name="managed_departments",
-        blank=True
+        settings.AUTH_USER_MODEL, related_name="managed_departments", blank=True
     )
     auditors = models.ManyToManyField(
-        settings.AUTH_USER_MODEL,   
-        related_name="audited_departments",
-        blank=True
+        settings.AUTH_USER_MODEL, related_name="audited_departments", blank=True
     )
+
+    def __str__(self):
+        return self.name
+
+
+class Category(models.Model):
+    """Optional category for feedback items."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name

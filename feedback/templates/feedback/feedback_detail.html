@@ -5,7 +5,11 @@ Feedback Details{% endblock title %} {% block content %}
     <div class="detail-header">
       <div>
         <p class="eyebrow">Feedback detail</p>
+        {% if feedback.title %}
+        <h2 class="section-title">{{ feedback.title }}</h2>
+        {% else %}
         <h2 class="section-title">{{ feedback.message|truncatechars:60 }}</h2>
+        {% endif %}
         <p class="section-subtitle">
           Submitted on {{ feedback.created_at|date:"M d, Y" }} at 
           {{ feedback.created_at|date:"h:i A" }}.
