@@ -1,117 +1,412 @@
-{% extends "feedback/base.html" %} {% block title %}{{ feedback.message|truncatechars:40 }} |
-Feedback Details{% endblock title %} {% block content %}
-<section class="detail-layout">
-  <article class="card detail-card">
-    <div class="detail-header">
-      <div>
-        <p class="eyebrow">Feedback detail</p>
+{% extends "feedback/base.html" %} 
+{% block title %}{{ feedback.message|truncatechars:40 }} | FeedbackFlow{% endblock title %} 
+{% block content %}
+
+<div class="feedback-detail-page">
+  <!-- Header -->
+  <div class="page-header">
+    <a href="{% url 'feedback_list' %}" class="back-link">
+      <span class="material-symbols-outlined">arrow_back</span>
+      Back
+    </a>
+    <div>
+      <h1 class="h1">
         {% if feedback.title %}
-        <h2 class="section-title">{{ feedback.title }}</h2>
+          {{ feedback.title }}
         {% else %}
-        <h2 class="section-title">{{ feedback.message|truncatechars:60 }}</h2>
+          {{ feedback.message|truncatechars:60 }}
         {% endif %}
-        <p class="section-subtitle">
-          Submitted on {{ feedback.created_at|date:"M d, Y" }} at 
-          {{ feedback.created_at|date:"h:i A" }}.
-        </p>
-        <div class="inline-meta">
-          <span class="meta-pill">{{ feedback.priority|title }} priority</span>
-          <span class="meta-pill">{{ feedback.category|default:"Uncategorized" }}</span>
-          <span class="meta-pill">{{ response_count }} responses</span>
-        </div>
-      </div>
-      <span class="badge badge-{{ feedback.status }}">{{ feedback.status }}</span>
-
-      {% if perms.feedback.assign_feedback %}
-      <div class="inline-panel">
-        <p class="meta-label">Quick assignment</p>
-        {% include "feedback/feedback_assign_form.html" with feedback=feedback form=assign_form %}
-      </div>
-      {% endif %}
+      </h1>
     </div>
+  </div>
 
-    <p class="detail-lead">{{ feedback.message }}</p>
-
-    <div class="detail-meta-grid">
-      <div class="meta-block">
-        <p class="meta-label">Sender</p>
-        <p class="meta-value">{{ feedback.creator.name }}</p>
-        <p class="meta">{{ feedback.email }}</p>
-      </div>
-
-      <div class="meta-block">
-        <p class="meta-label">Priority</p>
-        <p class="meta-value">{{ feedback.priority|title }}</p>
-        <p class="meta">Current workflow status: {{ feedback.status|title }}</p>
-      </div>
-
-      <div class="meta-block">
-        <p class="meta-label">Departments</p>
-        {% if feedback.to_departments.all %}
-        <ul class="chip-list">
-          {% for department in feedback.to_departments.all %}
-          <li class="chip">{{ department.name }}</li>
-          {% empty %}
-          <li class="meta-value">No departments linked.</li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <p class="meta-value">No departments linked.</p>
-        {% endif %}
+  <!-- Metadata Bar (Horizontal with Icons) -->
+  <div class="metadata-bar">
+    <!-- Sender -->
+    <div class="metadata-item">
+      <span class="metadata-icon">
+        <span class="material-symbols-outlined">person</span>
+      </span>
+      <div class="metadata-content">
+        <p class="metadata-label">From</p>
+        <p class="metadata-value">{{ feedback.creator.name }}</p>
       </div>
     </div>
 
+    <!-- Date/Time -->
+    <div class="metadata-item">
+      <span class="metadata-icon">
+        <span class="material-symbols-outlined">calendar_today</span>
+      </span>
+      <div class="metadata-content">
+        <p class="metadata-label">Submitted</p>
+        <p class="metadata-value">{{ feedback.created_at|date:"M d, Y" }}</p>
+      </div>
+    </div>
+
+    <!-- Priority -->
+    <div class="metadata-item">
+      <span class="metadata-icon priority-{{ feedback.priority|lower }}">
+        <span class="material-symbols-outlined">flag</span>
+      </span>
+      <div class="metadata-content">
+        <p class="metadata-label">Priority</p>
+        <p class="metadata-value">{{ feedback.priority|title }}</p>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="metadata-item">
+      <span class="metadata-icon status-{{ feedback.status|lower }}">
+        <span class="material-symbols-outlined">
+          {% if feedback.status == 'pending' %}hourglass_empty
+          {% elif feedback.status == 'reviewed' %}assignment
+          {% else %}check_circle{% endif %}
+        </span>
+      </span>
+      <div class="metadata-content">
+        <p class="metadata-label">Status</p>
+        <p class="metadata-value">{{ feedback.status|title }}</p>
+      </div>
+    </div>
+
+    <!-- Category -->
     {% if feedback.category %}
-    <div class="meta-block detail-category">
-      <p class="meta-label">Category</p>
-      <p class="meta-value">{{ feedback.category.name }}</p>
+    <div class="metadata-item">
+      <span class="metadata-icon">
+        <span class="material-symbols-outlined">category</span>
+      </span>
+      <div class="metadata-content">
+        <p class="metadata-label">Category</p>
+        <p class="metadata-value">{{ feedback.category.name }}</p>
+      </div>
     </div>
     {% endif %}
 
-    <div class="actions">
+    <!-- Departments -->
+    <div class="metadata-item">
+      <span class="metadata-icon">
+        <span class="material-symbols-outlined">business</span>
+      </span>
+      <div class="metadata-content">
+        <p class="metadata-label">Routed To</p>
+        <p class="metadata-value">
+          {% if feedback.to_departments.all %}
+            {% for department in feedback.to_departments.all %}{{ department.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+          {% else %}
+            No departments
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <!-- Responses -->
+    <div class="metadata-item">
+      <span class="metadata-icon">
+        <span class="material-symbols-outlined">chat</span>
+      </span>
+      <div class="metadata-content">
+        <p class="metadata-label">Responses</p>
+        <p class="metadata-value">{{ response_count }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="feedback-grid">
+    <!-- Feedback Message -->
+    <div class="feedback-message-section">
+      <div class="card">
+        <div class="card-body">
+          <p class="label-caps">Feedback Message</p>
+          <p class="body-lg" style="margin: 16px 0 0 0; line-height: 1.8; color: var(--on-surface);">{{ feedback.message }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
       {% if perms.feedback.add_feedbackresponse %}
-      <a
-        class="button button-primary"
-        href="{% url 'feedback_response_create' feedback.pk %}"
-        >Respond</a>
+      <a href="{% url 'feedback_response_create' feedback.pk %}" class="btn btn-primary">
+        <span class="material-symbols-outlined">add</span>
+        Add Response
+      </a>
       {% endif %}
       {% if perms.feedback.view_feedbackresponse %}
-      <a
-        class="button button-secondary"
-        href="{% url 'feedback_response_list' feedback.pk %}"
-        >View responses</a>
+      <a href="{% url 'feedback_response_list' feedback.pk %}" class="btn btn-secondary">
+        <span class="material-symbols-outlined">chat</span>
+        View All
+      </a>
       {% endif %}
       {% if perms.feedback.delete_feedback %}
-      <a
-        class="button button-danger"
-        href="{% url 'feedback_delete' feedback.pk %}">Delete</a>
+      <a href="{% url 'feedback_delete' feedback.pk %}" class="btn btn-secondary delete-btn">
+        <span class="material-symbols-outlined">delete</span>
+        Delete
+      </a>
       {% endif %}
     </div>
-  </article>
 
-  <aside class="card sidebar-card">
-    <p class="eyebrow">Quick context</p>
-    <h3 class="card-title">What happens next</h3>
-    <p class="section-subtitle">
-      Review the message, route it to the right department, and mark it resolved
-      once the issue is closed.
-    </p>
-    <div class="detail-meta-grid">
-      <div class="meta-block">
-        <p class="meta-label">Responses</p>
-        <p class="meta-value">{{ response_count }}</p>
-      </div>
-      <div class="meta-block">
-        <p class="meta-label">Created</p>
-        <p class="meta-value">{{ feedback.created_at|date:"F j, Y" }}</p>
+    <!-- Quick Assign (if available) -->
+    {% if perms.feedback.assign_feedback %}
+    <div class="quick-assign-section">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="h4" style="margin: 0 0 12px 0;">Quick Assign</h3>
+          {% include "feedback/feedback_assign_form.html" with feedback=feedback form=assign_form %}
+        </div>
       </div>
     </div>
-    <div class="detail-meta-grid">
-      <div class="meta-block">
-        <p class="meta-label">Current status</p>
-        <p class="meta-value">{{ feedback.status|title }}</p>
-      </div>
+    {% endif %}
+  </div>
+
+  <!-- Recent Responses Preview -->
+  <div class="responses-preview-section">
+    <div class="section-header">
+      <h2 class="h3">Recent Responses</h2>
+      <p class="section-subtext">{{ response_count }} response{{ response_count|pluralize }}</p>
     </div>
-  </aside>
-</section>
+
+    <div class="responses-container">
+      <!-- Response list will be loaded here or shown with pagination -->
+      <p class="empty-state" style="text-align: center; padding: 40px 20px; color: var(--on-surface-variant);">
+        No responses yet. <a href="{% url 'feedback_response_create' feedback.pk %}" style="color: var(--secondary); font-weight: 600; text-decoration: none;">Add the first response</a>
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+.feedback-detail-page {
+  padding: 24px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--secondary);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  transition: all 150ms ease;
+}
+
+.back-link:hover {
+  background-color: var(--surface-container-low);
+}
+
+.page-header h1 {
+  margin: 0;
+}
+
+/* Horizontal Metadata Bar */
+.metadata-bar {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  background: white;
+  border-radius: var(--radius-lg);
+  border: 1px solid #e5e7eb;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.metadata-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: #f9fafb;
+  flex-shrink: 0;
+  min-width: fit-content;
+}
+
+.metadata-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--secondary-fixed) 0%, var(--secondary-fixed-dim) 100%);
+  color: var(--secondary-container);
+  flex-shrink: 0;
+}
+
+.metadata-icon.priority-high {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.metadata-icon.priority-medium {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.metadata-icon.priority-low {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.metadata-icon.status-pending {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.metadata-icon.status-reviewed {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+}
+
+.metadata-icon.status-resolved {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.metadata-content {
+  min-width: 0;
+}
+
+.metadata-label {
+  font-size: 11px;
+  color: var(--on-surface-variant);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.metadata-value {
+  font-size: 14px;
+  color: var(--on-surface);
+  font-weight: 600;
+  margin: 2px 0 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Main Content Grid */
+.feedback-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.feedback-message-section {
+  grid-column: 1;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 140px;
+  height: fit-content;
+}
+
+.action-buttons .btn {
+  padding: 10px 12px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.action-buttons .delete-btn {
+  background-color: #fef2f2;
+  color: #7f1d1d;
+  border-color: #fecaca;
+}
+
+.action-buttons .delete-btn:hover {
+  background-color: #fee2e2;
+}
+
+.quick-assign-section {
+  grid-column: 1 / -1;
+  max-width: 400px;
+}
+
+/* Responses Preview Section */
+.responses-preview-section {
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.section-header {
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  margin: 0 0 4px 0;
+}
+
+.section-subtext {
+  margin: 0;
+  font-size: 14px;
+  color: var(--on-surface-variant);
+}
+
+.responses-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empty-state {
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .feedback-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-buttons {
+    flex-direction: row;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .feedback-detail-page {
+    padding: 16px;
+  }
+  
+  .metadata-bar {
+    flex-direction: column;
+    overflow-x: visible;
+  }
+  
+  .metadata-item {
+    width: 100%;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .action-buttons {
+    flex-direction: row;
+  }
+}
+</style>
+
 {% endblock content %}

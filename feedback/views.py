@@ -4,14 +4,16 @@ from django.views.generic import (
     CreateView,
     DeleteView,
     UpdateView,
+    TemplateView,
 )
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.views import View
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import Http404
+from django.utils import timezone
+
 from django.urls import reverse_lazy, reverse
-from django.db.models import Q
+from django.db.models import Q, Count
 
 from guardian.shortcuts import get_objects_for_user, assign_perm  # type: ignore
 
@@ -26,12 +28,17 @@ from .forms import (
     FeedbackForm,
     FeedbackResponseForm,
     FeedbackResponseAssignForm,
+    DepartmentForm,
+    CategoryForm,
 )
 from .mixins import FeedbackMixin
 from .permissions import (
     assign_department_permissions,
     assign_owner_perms,
     assign_permission_creator_of_feedback_to_response,
+)
+from .utils import (
+    get_analytics_data,
 )
 
 
@@ -94,6 +101,43 @@ class FeedbackListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
         context["priority_choices"] = Feedback.PRIORITY_CHOICES
         context["category_choices"] = Category.objects.order_by("name")
         context["total_feedback_count"] = self.get_queryset().count()
+        return context
+
+
+class AnalyticsView(LoginRequiredMixin, PermissionRequiredMixin, TemplateView):
+    template_name = "feedback/analytics.html"
+    permission_required = ["feedback.view_feedback"]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Get comprehensive analytics data from business logic
+        analytics = get_analytics_data(self.request.user)
+
+        # Flatten analytics data into context
+        context["total_feedback"] = analytics["total_feedback"]
+        context["status_stats"] = analytics["status"]["stats"]
+        context["status_pending"] = analytics["status"]["pending"]
+        context["status_reviewed"] = analytics["status"]["reviewed"]
+        context["status_resolved"] = analytics["status"]["resolved"]
+
+        context["priority_stats"] = analytics["priority"]["stats"]
+        context["priority_low"] = analytics["priority"]["low"]
+        context["priority_medium"] = analytics["priority"]["medium"]
+        context["priority_high"] = analytics["priority"]["high"]
+
+        context["category_stats"] = analytics["categories"]
+        context["department_stats"] = analytics["departments"]
+
+        context["total_responses"] = analytics["responses"]["total_responses"]
+        context["resolved_count"] = analytics["responses"]["resolved_count"]
+        context["unresolved_count"] = analytics["responses"]["unresolved_count"]
+        context["response_rate"] = analytics["responses"]["response_rate"]
+
+        context["recent_feedback_count"] = analytics["recent_activity"]["recent_count"]
+        context["feedback_per_day"] = analytics["recent_activity"]["feedback_per_day"]
+        context["avg_response_time"] = analytics["avg_response_time"]
+
         return context
 
 
@@ -306,10 +350,118 @@ class FeedbackResponseAssignView(LoginRequiredMixin, PermissionRequiredMixin, Vi
         )
 
 
-# additinal view to add the department , only allowed to superuser and staff user
+# Notification list and mark‑as‑read views
+from django.views.generic import ListView, View
+from django.http import JsonResponse, HttpResponseBadRequest
+from .models import Notification
+
+class NotificationListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """List recent notifications for the logged‑in user.
+    Returns JSON when ``?format=json`` is present, otherwise renders
+    ``feedback/notifications_list.html``.
+    """
+
+    model = Notification
+    template_name = "feedback/notifications_list.html"
+    context_object_name = "notifications"
+    permission_required = ["feedback.view_feedback"]
+    paginate_by = 20
+
+    def get_queryset(self):
+        return Notification.objects.filter(recipient=self.request.user).order_by("-created_at")
+
+    def render_to_response(self, context, **response_kwargs):
+        if self.request.GET.get("format") == "json":
+            data = [
+                {
+                    "id": n.id,
+                    "type": n.notification_type,
+                    "title": n.title,
+                    "message": n.message,
+                    "is_read": n.is_read,
+                    "created_at": n.created_at.isoformat(),
+                }
+                for n in context["notifications"]
+            ]
+            return JsonResponse({"notifications": data})
+        return super().render_to_response(context, **response_kwargs)
+
+class MarkNotificationReadView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """Mark a single notification as read (AJAX)."""
+
+    permission_required = ["feedback.view_feedback"]
+
+    def post(self, request, pk):
+        try:
+            notification = Notification.objects.get(id=pk, recipient=request.user)
+        except Notification.DoesNotExist:
+            return HttpResponseBadRequest("Invalid notification")
+        if not notification.is_read:
+            notification.is_read = True
+            notification.read_at = timezone.now()
+            notification.save(update_fields=["is_read", "read_at"])
+        return JsonResponse({"status": "ok"})
+
+# ---------------------------------------------------------------------------
+# Server‑Sent Events endpoint for real‑time notifications
+# ---------------------------------------------------------------------------
+from django.http import StreamingHttpResponse
+import time
+
+class NotificationSSEView(LoginRequiredMixin, PermissionRequiredMixin, View):
+    """Stream new notifications to the client using Server‑Sent Events.
+    The client should open an EventSource to ``/feedback/notifications/sse/``.
+    Events are sent as ``data: <json>\n\n`` where the JSON contains the
+    notification fields.
+    """
+
+    permission_required = ["feedback.view_feedback"]
+
+    def get(self, request):
+        # Simple implementation: poll the DB every 5 seconds for new notifications.
+        # In production you might use a more efficient approach (Redis pub/sub, etc.).
+        last_id = request.GET.get("last_id")
+        try:
+            last_id = int(last_id) if last_id else 0
+        except ValueError:
+            last_id = 0
+
+        def event_stream():
+            while True:
+                new_notifications = Notification.objects.filter(
+                    recipient=request.user, id__gt=last_id
+                ).order_by("id")
+                for notif in new_notifications:
+                    payload = {
+                        "id": notif.id,
+                        "type": notif.notification_type,
+                        "title": notif.title,
+                        "message": notif.message,
+                        "is_read": notif.is_read,
+                        "created_at": notif.created_at.isoformat(),
+                    }
+                    yield f"data: {json.dumps(payload)}\n\n"
+                    last_id = notif.id
+                time.sleep(5)
+        response = StreamingHttpResponse(event_stream(), content_type="text/event-stream")
+        response['Cache-Control'] = 'no-cache'
+        return response
+
+
 class DepartmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Department
     template_name = "feedback/department_form.html"
-    fields = ["name", "description"]
+    form_class = DepartmentForm
     success_url = reverse_lazy("feedback_list")
     permission_required = ["feedback.add_department"]
+
+
+class CategoryCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = Category
+    template_name = "feedback/category_form.html"
+    form_class = CategoryForm
+    success_url = reverse_lazy("feedback_list")
+    permission_required = ["feedback.add_category"]
+
+# Existing views continue below …
+

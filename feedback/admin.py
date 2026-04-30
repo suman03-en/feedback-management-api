@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Feedback, FeedbackResponse, Department, FeedbackResponderRecord
+from .models import Feedback, FeedbackResponse, Department, FeedbackResponderRecord, Category
 
 
 class FeedbackAdmin(admin.ModelAdmin):
@@ -30,3 +30,4 @@ admin.site.register(Feedback, FeedbackAdmin)
 admin.site.register(FeedbackResponse, FeedbackResponseAdmin)
 admin.site.register(Department, DepartmentAdmin)
 admin.site.register(FeedbackResponderRecord, FeedbackResponderRecordAdmin)
+admin.site.register(Category)

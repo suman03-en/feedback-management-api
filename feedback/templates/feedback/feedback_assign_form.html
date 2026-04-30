@@ -1,9 +1,21 @@
-<form action="{% url 'feedback_responder_assign' feedback.pk %}" method="post" class="stacked-form inline-form">
+<form action="{% url 'feedback_responder_assign' feedback.pk %}" method="post" style="display: flex; flex-direction: column; gap: 16px;">
     {% csrf_token %}
-    <div class="field-block full-width">
-        <label for="id_responder">{{ form.responder.label }}</label>
+    
+    <div class="form-group" style="margin-bottom: 0;">
+        <label for="{{ form.responder.id_for_label }}" class="form-label">{{ form.responder.label }}</label>
         {{ form.responder }}
-        {{ form.responder.errors }}
+        {% if form.responder.errors %}
+        <div style="color: #991b1b; font-size: 12px; font-weight: 500; margin-top: 6px;">
+            {% for error in form.responder.errors %}
+            <span>{{ error }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <p class="form-help">Select a team member to respond to this feedback</p>
     </div>
-    <button class="button button-secondary" type="submit">Assign</button>
+    
+    <button type="submit" class="btn btn-primary" style="align-self: flex-start;">
+        <span class="material-symbols-outlined">assignment_ind</span>
+        Assign Responder
+    </button>
 </form>

@@ -10,11 +10,16 @@ from .views import (
     FeedbackResponseListView,
     FeedbackResponseAssignView,
     DepartmentCreateView,
+    AnalyticsView,
+    CategoryCreateView,
+    NotificationListView,
+    MarkNotificationReadView,
+    NotificationSSEView,
 )
-
 
 urlpatterns = [
     path("", FeedbackListView.as_view(), name="feedback_list"),
+    path("analytics/", AnalyticsView.as_view(), name="analytics"),
     path("<uuid:pk>/", FeedbackDetailView.as_view(), name="feedback_detail"),
     path("create/", FeedbackCreateView.as_view(), name="feedback_create"),
     path("<uuid:pk>/delete/", FeedbackDeleteView.as_view(), name="feedback_delete"),
@@ -50,4 +55,15 @@ urlpatterns = [
         DepartmentCreateView.as_view(),
         name="department_create",
     ),
+    path(
+        "category/create/",
+        CategoryCreateView.as_view(),
+        name="category_create",
+    ),
+    # notification URLs
+    path('notifications/', NotificationListView.as_view(), name='notifications'),
+    path('notifications/mark/<int:pk>/', MarkNotificationReadView.as_view(), name='notification_mark_read'),
+    path('notifications/sse/', NotificationSSEView.as_view(), name='notifications_sse'),
+
+
 ]

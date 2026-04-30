@@ -1,0 +1,46 @@
+{% load static %}
+<div class="notification-dropdown" id="notification-dropdown" style="display:none; position:absolute; right:1rem; top:3rem; background:#fff; border:1px solid #ccc; width:320px; max-height:400px; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,.2); z-index:1000;">
+  <div class="dropdown-header" style="padding:0.5rem; border-bottom:1px solid #eee; font-weight:bold;">
+    Notifications (<span id="unread-count">{{ unread_count }}</span>)
+  </div>
+  <ul style="list-style:none; margin:0; padding:0;">
+    {% for notif in recent_notifications %}
+      <li style="border-bottom:1px solid #f0f0f0; padding:0.5rem; background:{% if not notif.is_read %}#f9f9ff{% else %}#fff{% endif %};">
+        <strong>{{ notif.title }}</strong><br>
+        <small>{{ notif.message|linebreaksbr }}</small><br>
+        <small class="text-muted" style="float:right;">{{ notif.created_at|date:"M d, H:i" }}</small>
+        {% if not notif.is_read %}
+          <button class="mark-read-btn" data-id="{{ notif.id }}" style="background:none;border:none;color:#007bff;cursor:pointer;">Mark read</button>
+        {% endif %}
+      </li>
+    {% empty %}
+      <li style="padding:0.5rem; text-align:center; color:#666;">No notifications</li>
+    {% endfor %}
+  </ul>
+  <div style="text-align:center; padding:0.5rem;">
+    <a href="{% url 'notifications' %}">View all</a>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.getElementById('notification-button');
+    const dropdown = document.getElementById('notification-dropdown');
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    });
+    document.body.addEventListener('click', function() { dropdown.style.display = 'none'; });
+    // Mark‑as‑read AJAX
+    dropdown.addEventListener('click', function(e) {
+      if (e.target.classList.contains('mark-read-btn')) {
+        const id = e.target.dataset.id;
+        fetch('{% url "notification_mark_read" pk=0 %}'.replace('/0/', '/' + id + '/'), {
+          method: 'POST',
+          headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+        }).then(r => r.json()).then(data => {
+          if (data.status === 'ok') { location.reload(); }
+        });
+      }
+    });
+  });
+</script>

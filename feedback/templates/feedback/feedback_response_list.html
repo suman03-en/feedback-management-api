@@ -1,65 +1,94 @@
 {% extends "feedback/base.html" %} 
-{% block title %}Responses for {{feedback.message|truncatewords:10 }}{% endblock title %} {% block content %}
-<section class="card card-soft">
-  <div class="section-heading">
-    <div>
-      <p class="eyebrow">Conversation history</p>
-      <h2 class="section-title">Responses for <i>{{ feedback.message }}</i></h2>
-      <p class="section-subtitle">
-        Review every reply associated with this request in chronological
-        context.
-      </p>
-    </div>
-    <div class="button-group">
-      <a
-        class="button button-secondary"
-        href="{% url 'feedback_detail' feedback.pk %}"
-        >Back to detail</a
-      >
-      {% if perms.feedback.add_feedbackresponse %}
-      <a
-        class="button button-primary"
-        href="{% url 'feedback_response_create' feedback.pk %}"
-        >Add response</a
-      >
-      {% endif %}
-    </div>
-  </div>
-</section>
+{% block title %}Responses - FeedbackFlow{% endblock title %} 
+{% block content %}
 
-<section class="card">
-  <div class="feedback-list">
-    {% for response in responses %}
-    <article class="response-card">
-      <div class="response-card-header">
-        <div>
-          <p class="eyebrow">{{ response.created_at|date:"M d, Y" }}</p>
-          <h3 class="card-title">{{ response.responder.all|join:", " }}</h3>
-          <div class="inline-meta">
-            <span class="meta-pill">Reply</span>
-            <span class="meta-pill">{{ response.created_at|date:"h:i A" }}</span>
-          </div>
-        </div>
-        <div class="button-group">
-          {% if perms.feedback.change_feedbackresponse %}
-          <a class="button button-secondary" href="{% url 'feedback_response_edit' response.pk %}">Edit</a>
-          {% endif %}
-          {% if perms.feedback.delete_feedbackresponse %}
-          <a class="button button-danger" href="{% url 'feedback_response_delete' response.pk %}">Delete</a>
-          {% endif %}
-        </div>
+<div class="page-header">
+  <div class="header-content">
+    <a href="{% url 'feedback_detail' feedback.pk %}" style="display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; color: var(--secondary); text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: var(--radius-md); transition: all 150ms ease;">
+      <span class="material-symbols-outlined">arrow_back</span>
+      Back
+    </a>
+    <h1 class="h1">Response Thread</h1>
+    <p class="body-sm">Review all responses and actions taken on this feedback item.</p>
+  </div>
+  <div class="header-actions">
+    {% if perms.feedback.add_feedbackresponse %}
+    <a href="{% url 'feedback_response_create' feedback.pk %}" class="btn btn-primary">
+      <span class="material-symbols-outlined">add</span>
+      Add Response
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Original Feedback Card -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header">
+    <p class="label-caps" style="color: var(--on-surface-variant); margin: 0;">Original Feedback</p>
+  </div>
+  <div class="card-body">
+    <p class="body-sm" style="margin: 0 0 8px 0; color: var(--on-surface-variant);">
+      <strong>From:</strong> {{ feedback.creator.name }}
+    </p>
+    <p class="body-sm" style="margin: 0 0 12px 0; color: var(--on-surface-variant);">
+      <strong>Date:</strong> {{ feedback.created_at|date:"M d, Y \a\t h:i A" }}
+    </p>
+    {% if feedback.title %}
+    <p class="body-md" style="margin: 0 0 12px 0; font-weight: 600; color: var(--on-surface);">{{ feedback.title }}</p>
+    {% endif %}
+    <p class="body-md" style="margin: 0; line-height: 1.6; color: var(--on-surface);">{{ feedback.message }}</p>
+  </div>
+</div>
+
+<!-- Responses List -->
+<div style="display: flex; flex-direction: column; gap: 16px;">
+  {% for response in responses %}
+  <div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+      <div>
+        <p class="label-caps" style="color: var(--on-surface-variant); margin: 0 0 4px 0;">
+          <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">chat</span>
+          Response
+        </p>
+        <p class="body-sm" style="margin: 0; color: var(--on-surface); font-weight: 600;">
+          {{ response.responder.all|join:", "|default:"System" }}
+        </p>
+        <p class="body-sm" style="margin: 4px 0 0 0; color: var(--on-surface-variant);">
+          {{ response.created_at|date:"M d, Y \a\t h:i A" }}
+        </p>
       </div>
-      <p class="response-text">{{ response.responder_message }}</p>
-    </article>
-    {% empty %}
-    <div class="empty-state">
-      {% if perms.feedback.add_feedbackresponse %}
-      No responses yet. Add the first response to document the resolution path.
-      {% else %}
-      No responses yet.
+      {% if perms.feedback.change_feedbackresponse or perms.feedback.delete_feedbackresponse %}
+      <div style="display: flex; gap: 8px;">
+        {% if perms.feedback.change_feedbackresponse %}
+        <a href="{% url 'feedback_response_edit' response.pk %}" class="btn btn-secondary btn-sm">
+          <span class="material-symbols-outlined">edit</span>
+        </a>
+        {% endif %}
+        {% if perms.feedback.delete_feedbackresponse %}
+        <a href="{% url 'feedback_response_delete' response.pk %}" class="btn btn-secondary btn-sm" style="background-color: #ffdad6; color: #7f1d1d; border-color: #f5c2c2;">
+          <span class="material-symbols-outlined">delete</span>
+        </a>
+        {% endif %}
+      </div>
       {% endif %}
     </div>
-    {% endfor %}
+    <div class="card-body">
+      <p class="body-md" style="margin: 0; line-height: 1.6; color: var(--on-surface);">{{ response.responder_message }}</p>
+    </div>
   </div>
-</section>
+  {% empty %}
+  <div class="empty-state">
+    <span class="material-symbols-outlined">chat_bubble_outline</span>
+    <h3 class="h3" style="margin-top: 16px;">No responses yet</h3>
+    <p class="body-md">Be the first to respond to this feedback item.</p>
+    {% if perms.feedback.add_feedbackresponse %}
+    <a href="{% url 'feedback_response_create' feedback.pk %}" class="btn btn-primary" style="margin-top: 16px;">
+      <span class="material-symbols-outlined">add</span>
+      Add Response
+    </a>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
 {% endblock content %}

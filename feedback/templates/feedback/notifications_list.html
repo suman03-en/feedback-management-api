@@ -1,0 +1,24 @@
+{% extends "feedback/base.html" %}
+{% block title %}Notifications{% endblock title %}
+{% block content %}
+<h2>Your Notifications</h2>
+{% if notifications %}
+  <ul style="list-style:none; padding:0;">
+    {% for notif in notifications %}
+      <li style="border-bottom:1px solid #eee; padding:0.5rem; background:{% if not notif.is_read %}#f0f8ff{% else %}#fff{% endif %};">
+        <strong>{{ notif.title }}</strong><br>
+        <small>{{ notif.message|linebreaksbr }}</small><br>
+        <small class="text-muted">{{ notif.created_at|date:"M d, Y H:i" }}</small>
+        {% if not notif.is_read %}
+          <form method="post" action="{% url 'notification_mark_read' pk=notif.id %}" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-link">Mark read</button>
+          </form>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No notifications.</p>
+{% endif %}
+{% endblock content %}

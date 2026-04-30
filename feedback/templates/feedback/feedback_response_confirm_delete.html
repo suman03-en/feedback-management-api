@@ -1,17 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback Response Delete</title>
-</head>
-<body>
-    <h1>Delete Feedback Response</h1>
-    <p>Are you sure you want to delete this feedback response?</p>
-    <form method="post">
+{% extends "feedback/base.html" %} 
+{% block title %}Delete Response - FeedbackFlow{% endblock title %} 
+{% block content %}
+
+<div style="max-width: 600px; margin: 0 auto;">
+  <div class="card">
+    <div class="card-header" style="background-color: #ffdad6; border-bottom-color: #f5c2c2;">
+      <h2 class="h2" style="margin: 0; color: #7f1d1d;">
+        <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 8px;">warning</span>
+        Delete Response
+      </h2>
+    </div>
+    
+    <div class="card-body">
+      <p class="body-md" style="margin: 0 0 16px 0; line-height: 1.6;">
+        Are you sure you want to delete this response? This action <strong>cannot be undone</strong>.
+      </p>
+      
+      <!-- Preview of response being deleted -->
+      <div style="padding: 16px; background-color: var(--surface-container); border-radius: 8px; margin: 20px 0;">
+        <p class="label-caps" style="color: var(--on-surface-variant); margin: 0 0 8px 0;">Response to be deleted:</p>
+        <p class="body-sm" style="margin: 0 0 8px 0; color: var(--on-surface-variant);">
+          <strong>From:</strong> {{ object.responder.all|join:", "|default:"System" }}
+        </p>
+        <p class="body-md" style="margin: 0; color: var(--on-surface-variant); line-height: 1.6;">{{ object.responder_message|truncatechars:200 }}</p>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <a href="{% url 'feedback_response_list' object.feedback.pk %}" class="btn btn-secondary">
+        <span class="material-symbols-outlined">close</span>
+        Cancel
+      </a>
+      <form method="post" style="display: inline;">
         {% csrf_token %}
-        <button type="submit">Yes, Delete</button>
-        <a href="{% url 'feedback_list' %}">Cancel</a>
-    </form>
-</body>
-</html>
+        <button type="submit" class="btn btn-secondary" style="background-color: #ba1a1a; color: #ffffff; border-color: #ba1a1a;">
+          <span class="material-symbols-outlined">delete</span>
+          Delete Permanently
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}

@@ -1,0 +1,564 @@
+{% extends "feedback/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="analytics-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="h1">Analytics Dashboard</h1>
+      <p>Comprehensive insights into feedback trends and performance metrics.</p>
+    </div>
+  </div>
+
+  <!-- Key Metrics Section -->
+  <div class="metrics-grid">
+    <!-- Total Feedback -->
+    <div class="metric-card">
+      <div class="metric-icon" style="background: linear-gradient(135deg, var(--primary-fixed) 0%, var(--primary-fixed-dim) 100%);">
+        <span class="material-symbols-outlined">mail</span>
+      </div>
+      <div class="metric-content">
+        <p class="metric-label">Total Feedback</p>
+        <p class="metric-value">{{ total_feedback }}</p>
+        <p class="metric-subtext">All feedback records</p>
+      </div>
+    </div>
+
+    <!-- Resolved -->
+    <div class="metric-card">
+      <div class="metric-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+        <span class="material-symbols-outlined">check_circle</span>
+      </div>
+      <div class="metric-content">
+        <p class="metric-label">Resolved</p>
+        <p class="metric-value">{{ resolved_count }}</p>
+        <p class="metric-subtext">{{ resolved_count|add:0|add:total_feedback|add:total_feedback|add:resolved_count|add:0 }}% completion rate</p>
+      </div>
+    </div>
+
+    <!-- Pending -->
+    <div class="metric-card">
+      <div class="metric-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+        <span class="material-symbols-outlined">hourglass_empty</span>
+      </div>
+      <div class="metric-content">
+        <p class="metric-label">Pending</p>
+        <p class="metric-value">{{ status_pending }}</p>
+        <p class="metric-subtext">Awaiting review</p>
+      </div>
+    </div>
+
+    <!-- Response Rate -->
+    <div class="metric-card">
+      <div class="metric-icon" style="background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dim) 100%);">
+        <span class="material-symbols-outlined">reply</span>
+      </div>
+      <div class="metric-content">
+        <p class="metric-label">Response Rate</p>
+        <p class="metric-value">{{ response_rate }}%</p>
+        <p class="metric-subtext">{{ total_responses }} responses</p>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="metric-card">
+      <div class="metric-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+        <span class="material-symbols-outlined">trending_up</span>
+      </div>
+      <div class="metric-content">
+        <p class="metric-label">Last 7 Days</p>
+        <p class="metric-value">{{ recent_feedback_count }}</p>
+        <p class="metric-subtext">New feedback items</p>
+      </div>
+    </div>
+
+    <!-- Avg Response Time -->
+    <div class="metric-card">
+      <div class="metric-icon" style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);">
+        <span class="material-symbols-outlined">schedule</span>
+      </div>
+      <div class="metric-content">
+        <p class="metric-label">Avg Response Time</p>
+        <p class="metric-value">{{ avg_response_time }}h</p>
+        <p class="metric-subtext">Hours to respond</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts and Breakdowns Section -->
+  <div class="analytics-grid">
+    <!-- Status Breakdown -->
+    <div class="analytics-card">
+      <div class="card-header">
+        <h2 class="h3">Status Distribution</h2>
+      </div>
+      <div class="card-body">
+        <div class="status-breakdown">
+          {% if status_pending %}
+          <div class="breakdown-item">
+            <div class="breakdown-header">
+              <span class="breakdown-label">Pending</span>
+              <span class="breakdown-count">{{ status_pending }}</span>
+            </div>
+            <div class="breakdown-bar">
+              <div class="breakdown-fill" style="width: {% widthratio status_pending total_feedback 100 %}%; background-color: #f59e0b;"></div>
+            </div>
+          </div>
+          {% endif %}
+          {% if status_reviewed %}
+          <div class="breakdown-item">
+            <div class="breakdown-header">
+              <span class="breakdown-label">Reviewed</span>
+              <span class="breakdown-count">{{ status_reviewed }}</span>
+            </div>
+            <div class="breakdown-bar">
+              <div class="breakdown-fill" style="width: {% widthratio status_reviewed total_feedback 100 %}%; background-color: #3b82f6;"></div>
+            </div>
+          </div>
+          {% endif %}
+          {% if status_resolved %}
+          <div class="breakdown-item">
+            <div class="breakdown-header">
+              <span class="breakdown-label">Resolved</span>
+              <span class="breakdown-count">{{ status_resolved }}</span>
+            </div>
+            <div class="breakdown-bar">
+              <div class="breakdown-fill" style="width: {% widthratio status_resolved total_feedback 100 %}%; background-color: #10b981;"></div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Priority Breakdown -->
+    <div class="analytics-card">
+      <div class="card-header">
+        <h2 class="h3">Priority Levels</h2>
+      </div>
+      <div class="card-body">
+        <div class="priority-breakdown">
+          {% if priority_low %}
+          <div class="priority-item">
+            <div class="priority-dot" style="background-color: #10b981;"></div>
+            <span>Low Priority</span>
+            <span class="priority-count">{{ priority_low }}</span>
+          </div>
+          {% endif %}
+          {% if priority_medium %}
+          <div class="priority-item">
+            <div class="priority-dot" style="background-color: #f59e0b;"></div>
+            <span>Medium Priority</span>
+            <span class="priority-count">{{ priority_medium }}</span>
+          </div>
+          {% endif %}
+          {% if priority_high %}
+          <div class="priority-item">
+            <div class="priority-dot" style="background-color: #ef4444;"></div>
+            <span>High Priority</span>
+            <span class="priority-count">{{ priority_high }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Categories -->
+    <div class="analytics-card">
+      <div class="card-header">
+        <h2 class="h3">Top Categories</h2>
+      </div>
+      <div class="card-body">
+        <div class="category-list">
+          {% if category_stats %}
+            {% for stat in category_stats %}
+            <div class="category-item">
+              <span class="category-name">{{ stat.category__name }}</span>
+              <span class="category-badge">{{ stat.count }}</span>
+            </div>
+            {% endfor %}
+          {% else %}
+            <p class="empty-state">No category data available</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Departments -->
+    <div class="analytics-card">
+      <div class="card-header">
+        <h2 class="h3">Department Activity</h2>
+      </div>
+      <div class="card-body">
+        <div class="department-list">
+          {% if department_stats %}
+            {% for stat in department_stats %}
+            <div class="department-item">
+              <span class="department-name">{{ stat.to_departments__name }}</span>
+              <span class="department-badge">{{ stat.count }}</span>
+            </div>
+            {% endfor %}
+          {% else %}
+            <p class="empty-state">No department data available</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- 7-Day Trend -->
+    <div class="analytics-card analytics-card-wide">
+      <div class="card-header">
+        <h2 class="h3">7-Day Feedback Trend</h2>
+      </div>
+      <div class="card-body">
+        <div class="chart-container">
+          <div class="chart-bars">
+            {% for day in feedback_per_day %}
+            <div class="chart-bar-wrapper">
+              <div class="chart-bar" style="height: {% if day.count > 0 %}{{ day.count|add:30 }}px{% else %}20px{% endif %}; background: linear-gradient(180deg, var(--secondary) 0%, var(--secondary-dim) 100%);">
+                {% if day.count > 0 %}<span class="bar-label">{{ day.count }}</span>{% endif %}
+              </div>
+              <span class="bar-date">{{ day.date }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.analytics-page {
+  padding: 32px 24px;
+}
+
+.page-header {
+  margin-bottom: 40px;
+}
+
+.header-content h1 {
+  margin-bottom: 8px;
+}
+
+.header-content p {
+  color: var(--on-surface-variant);
+  font-size: 16px;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.metric-card {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  background: white;
+  border-radius: var(--radius-lg);
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  transition: all 200ms ease;
+}
+
+.metric-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.metric-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  color: white;
+  flex-shrink: 0;
+}
+
+.metric-icon .material-symbols-outlined {
+  font-size: 28px;
+}
+
+.metric-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.metric-subtext {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+}
+
+/* Analytics Cards Grid */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 24px;
+}
+
+.analytics-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  transition: all 200ms ease;
+}
+
+.analytics-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.analytics-card-wide {
+  grid-column: 1 / -1;
+}
+
+.card-header {
+  padding: 20px 24px;
+  background: linear-gradient(135deg, var(--primary-fixed) 0%, var(--primary-fixed-dim) 100%);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.card-header h2 {
+  margin: 0;
+  color: var(--on-primary-fixed);
+}
+
+.card-body {
+  padding: 24px;
+}
+
+/* Status Breakdown */
+.status-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.breakdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.breakdown-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--on-surface);
+}
+
+.breakdown-count {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.breakdown-bar {
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.breakdown-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 300ms ease;
+}
+
+/* Priority Breakdown */
+.priority-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.priority-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: var(--radius-md);
+}
+
+.priority-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.priority-item span:nth-child(2) {
+  flex-grow: 1;
+  font-size: 14px;
+  color: var(--on-surface);
+}
+
+.priority-count {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 14px;
+}
+
+/* Lists */
+.category-list, .department-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.category-item, .department-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--secondary);
+}
+
+.category-name, .department-name {
+  font-size: 14px;
+  color: var(--on-surface);
+  font-weight: 500;
+}
+
+.category-badge, .department-badge {
+  background: var(--secondary-fixed);
+  color: var(--secondary-container);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--on-surface-variant);
+  font-size: 14px;
+  padding: 20px;
+}
+
+/* Chart */
+.chart-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  height: 200px;
+  padding: 20px 0;
+}
+
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+}
+
+.chart-bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  height: 100%;
+}
+
+.chart-bar {
+  width: 100%;
+  min-height: 20px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  transition: all 200ms ease;
+}
+
+.chart-bar:hover {
+  filter: brightness(1.1);
+}
+
+.bar-label {
+  margin-bottom: 4px;
+}
+
+.bar-date {
+  font-size: 12px;
+  color: var(--on-surface-variant);
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+  
+  .analytics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .analytics-page {
+    padding: 20px 16px;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .metric-card {
+    padding: 16px;
+  }
+  
+  .chart-bars {
+    gap: 8px;
+  }
+  
+  main {
+    margin-left: 0;
+  }
+}
+</style>
+{% endblock %}

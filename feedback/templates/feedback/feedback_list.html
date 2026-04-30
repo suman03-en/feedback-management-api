@@ -1,144 +1,234 @@
-{% extends "feedback/base.html" %} {% block title %}Feedback List{% endblock title %} {% block content %}
-<section class="dashboard-layout">
-  <aside class="card dashboard-rail">
-    <div class="rail-panel rail-hero">
-      <p class="eyebrow">Queue overview</p>
-      <h2 class="section-title">All feedback items</h2>
-      <p class="section-subtitle">
-        Track incoming feedback, spot what needs attention, and move items through review faster.
-      </p>
-      {% if perms.feedback.add_feedback %}
-      <div class="button-group rail-actions">
-        <a class="button button-primary" href="{% url 'feedback_create' %}">Create feedback</a>
-      </div>
-      {% endif %}
-    </div>
+{% extends "feedback/base.html" %} {% block title %}Feedback List - FeedbackFlow{% endblock title %} {% block content %}
 
-    <div class="rail-panel">
-      <p class="meta-label">Queue stats</p>
-      <div class="rail-stat-grid">
-        <div class="stat compact-stat">
-          <p class="stat-label">Total items</p>
-          <p class="stat-value">{{ total_feedback_count }}</p>
+<!-- Page Header -->
+<div class="page-header">
+  <div class="header-content">
+    <h1 class="h2">Feedback Explorer</h1>
+    <p class="body-sm">Review and manage institutional feedback records.</p>
+  </div>
+  <div class="header-actions" style="position: relative;">
+    <button class="btn btn-secondary btn-sm" onclick="toggleFilters()">
+      <span class="material-symbols-outlined">filter_list</span>
+      Filters
+    </button>
+    
+    <!-- Filter Overlay Dropdown -->
+    <div id="filter-backdrop" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 990; backdrop-filter: blur(4px);" onclick="toggleFilters()"></div>
+    <div id="filter-overlay" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--surface-container-lowest); padding: 24px; border-radius: var(--radius-lg); width: max-content; min-width: 320px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 1000; border: 1px solid var(--outline-variant); cursor: default; text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 class="h3" style="margin: 0;">Filters</h3>
+            <button type="button" onclick="toggleFilters()" style="background: none; border: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; padding: 4px;">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
-        <div class="stat compact-stat">
-          <p class="stat-label">Page items</p>
-          <p class="stat-value">{{ feedbacks|length }}</p>
-        </div>
-        <div class="stat compact-stat">
-          <p class="stat-label">Queue state</p>
-          <p class="stat-value">Filtered</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="rail-panel">
-      <p class="meta-label">Filters</p>
-      <form method="get" class="rail-form">
-        <div class="field-block">
-          <label for="queue-search">Search</label>
-          <input id="queue-search" type="search" name="q" value="{{ search_term }}" placeholder="Search title, message, or creator" />
-        </div>
-        <div class="field-block">
-          <label for="queue-status">Status</label>
-          <select id="queue-status" name="status">
-            <option value="">All statuses</option>
-            {% for value, label in status_choices %}
-            <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="field-block">
-          <label for="queue-priority">Priority</label>
-          <select id="queue-priority" name="priority">
-            <option value="">All priorities</option>
-            {% for value, label in priority_choices %}
-            <option value="{{ value }}" {% if selected_priority == value %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="field-block">
-          <label for="queue-category">Category</label>
-          <select id="queue-category" name="category">
-            <option value="">All categories</option>
-            {% for category in category_choices %}
-            <option value="{{ category.pk }}" {% if selected_category == category.pk|stringformat:"s" %}selected{% endif %}>{{ category.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="button-group rail-actions">
-          <button class="button button-primary" type="submit">Apply filters</button>
-          <a class="button button-secondary" href="{% url 'feedback_list' %}">Reset</a>
-        </div>
-      </form>
-    </div>
-  </aside>
-
-  <section class="dashboard-main">
-    <article class="card card-soft queue-header-card">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">Work queue</p>
-          <h2 class="section-title">Sorted for fast triage</h2>
-          <p class="section-subtitle">
-            Open each item for full details, then route, respond, or resolve.
-          </p>
-        </div>
-      </div>
-    </article>
-
-    <section class="card">
-      <div class="feedback-list">
-        {% for feedback in feedbacks %}
-        <article class="feedback-card">
-          <div class="feedback-card-header">
-            <div>
-              <p class="eyebrow">#{{ forloop.counter }}</p>
-              <h3 class="feedback-title">{% if feedback.title %}{{ feedback.title }}{% else %}{{ feedback.message|truncatechars:60 }}{% endif %}</h3>
-              <p class="feedback-summary">
-                {{ feedback.message|truncatechars:150 }}
-              </p>
-              <div class="inline-meta">
-                <span class="meta-pill">{{ feedback.priority|title }} priority</span>
-                <span class="meta-pill">{{ feedback.category|default:"Uncategorized" }}</span>
-                <span class="meta-pill">{{ feedback.creator.name }}</span>
-              </div>
+        
+        <form method="get" id="filter-form" style="display: flex; flex-direction: column; gap: 16px; margin: 0;">
+            <input type="hidden" name="q" id="filter-search-input" value="{{ search_term }}">
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 13px;">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
             </div>
-            <span class="badge badge-{{ feedback.status }}">{{ feedback.status }}</span>
-          </div>
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 13px;">Priority</label>
+                <select name="priority" class="form-select">
+                    <option value="">All Priorities</option>
+                    {% for value, label in priority_choices %}
+                    <option value="{{ value }}" {% if selected_priority == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-size: 13px;">Category</label>
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% for cat in category_choices %}
+                    <option value="{{ cat.id|stringformat:'s' }}" {% if selected_category == cat.id|stringformat:'s' %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 16px;">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='{% url 'feedback_list' %}'">Clear All</button>
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+            </div>
+        </form>
+    </div>
+    {% if perms.feedback.add_category %}
+    <a href="{% url 'category_create' %}" class="btn btn-secondary btn-sm" style="background: var(--surface-container-low);">
+      <span class="material-symbols-outlined">category</span>
+      Add Category
+    </a>
+    {% endif %}
+    {% if perms.feedback.add_feedback %}
+    <a href="{% url 'feedback_create' %}" class="btn btn-primary btn-sm">
+      <span class="material-symbols-outlined">add</span>
+      New Entry
+    </a>
+    {% endif %}
+  </div>
+</div>
 
-          {% if feedback.to_departments.all %}
-          <ul class="chip-list card-chip-list">
-            {% for department in feedback.to_departments.all %}
-            <li class="chip">{{ department.name }}</li>
-            {% endfor %}
-          </ul>
+<!-- Search and Filters -->
+  <form method="get" id="search-form" class="search-input-wrapper">
+    <span class="material-symbols-outlined">search</span>
+    <input type="search" name="q" value="{{ search_term }}" placeholder="Search feedback by title, department, or keywords..." class="search-input" onchange="document.getElementById('search-form').submit()" />
+  </form>
+  
+  {% if search_term or selected_status or selected_priority or selected_category %}
+  <div class="filter-pills">
+    {% if search_term %}
+    <span class="filter-pill">
+      Search: {{ search_term }}
+      <a href="?{% if selected_status %}status={{ selected_status }}&{% endif %}{% if selected_priority %}priority={{ selected_priority }}&{% endif %}{% if selected_category %}category={{ selected_category }}{% endif %}" style="color: inherit;">
+        <span class="material-symbols-outlined">close</span>
+      </a>
+    </span>
+    {% endif %}
+    
+    {% if selected_status %}
+    <span class="filter-pill">
+      Status: {{ selected_status|title }}
+      <a href="?q={{ search_term|urlencode }}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}" style="color: inherit;">
+        <span class="material-symbols-outlined">close</span>
+      </a>
+    </span>
+    {% endif %}
+    
+    {% if selected_priority %}
+    <span class="filter-pill">
+      Priority: {{ selected_priority|title }}
+      <a href="?q={{ search_term|urlencode }}&status={{ selected_status }}{% if selected_category %}&category={{ selected_category }}{% endif %}" style="color: inherit;">
+        <span class="material-symbols-outlined">close</span>
+      </a>
+    </span>
+    {% endif %}
+    
+    {% if selected_category %}
+    <span class="filter-pill">
+      Category: {{ selected_category }}
+      <a href="?q={{ search_term|urlencode }}&status={{ selected_status }}&priority={{ selected_priority }}" style="color: inherit;">
+        <span class="material-symbols-outlined">close</span>
+      </a>
+    </span>
+    {% endif %}
+    
+    <a href="{% url 'feedback_list' %}" class="clear-filters">Clear all</a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Feedback Grid - Desktop 2-Column Layout -->
+<div class="feedback-grid">
+  {% for feedback in feedbacks %}
+  <div class="feedback-card" onclick="window.location.href='{% url 'feedback_detail' feedback.pk %}'">
+    <div class="feedback-card-header">
+      <div class="feedback-icon">
+        <span class="material-symbols-outlined">
+          {% if feedback.status == 'pending' %}
+            hourglass_empty
+          {% elif feedback.status == 'reviewed' %}
+            assignment
+          {% elif feedback.status == 'resolved' %}
+            check_circle
+          {% else %}
+            comment
           {% endif %}
-
-          <div class="actions">
-            <a class="button button-secondary" href="{% url 'feedback_detail' feedback.pk %}">View details</a>
-            <a class="button button-ghost" href="{% url 'feedback_response_list' feedback.pk %}">Responses</a>
-          </div>
-        </article>
-        {% empty %}
-        <div class="empty-state">
-          No feedback has been submitted yet. Create the first item to start the queue.
-        </div>
-        {% endfor %}
+        </span>
       </div>
+      <div class="feedback-content" style="flex: 1;">
+        <div class="feedback-title-row">
+          <h3 class="feedback-title">{{ feedback.title|default:feedback.message|truncatechars:50 }}</h3>
+          <span class="status-badge status-{{ feedback.status|lower }}">{{ feedback.status }}</span>
+        </div>
+        <div class="feedback-meta">
+          {% if feedback.to_departments.all %}
+          <div class="feedback-meta-item">
+            <span class="material-symbols-outlined">business</span>
+            {{ feedback.to_departments.all|first }}
+          </div>
+          {% endif %}
+          <div class="feedback-meta-item">
+            <span class="material-symbols-outlined">calendar_today</span>
+            {{ feedback.created_at|date:"M d, Y" }}
+          </div>
+          <div class="feedback-meta-item">
+            <span class="material-symbols-outlined">person</span>
+            {{ feedback.creator.name }}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="feedback-right" style="margin-left: 0; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--surface-variant); display: flex; justify-content: flex-end;">
+      <a href="{% url 'feedback_detail' feedback.pk %}" class="btn btn-secondary btn-sm">
+        View Details
+      </a>
+    </div>
+  </div>
+  {% empty %}
+  <div class="empty-state" style="grid-column: 1 / -1;">
+    <span class="material-symbols-outlined">inbox</span>
+    <h3 class="h3" style="margin-top: 16px;">No feedback yet</h3>
+    <p class="body-md">Create the first feedback item to get started.</p>
+    {% if perms.feedback.add_feedback %}
+    <a href="{% url 'feedback_create' %}" class="btn btn-primary" style="margin-top: 16px;">
+      <span class="material-symbols-outlined">add</span>
+      Create Feedback
+    </a>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
 
-      {% if is_paginated %}
-      <nav class="pagination" aria-label="Feedback pages">
-        {% if page_obj.has_previous %}
-        <a class="button button-secondary" href="?page={{ page_obj.previous_page_number }}&q={{ search_term|urlencode }}&status={{ selected_status }}&priority={{ selected_priority }}&category={{ selected_category }}">Previous</a>
-        {% endif %}
-        <span class="pagination-label">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
-        {% if page_obj.has_next %}
-        <a class="button button-secondary" href="?page={{ page_obj.next_page_number }}&q={{ search_term|urlencode }}&status={{ selected_status }}&priority={{ selected_priority }}&category={{ selected_category }}">Next</a>
-        {% endif %}
-      </nav>
-      {% endif %}
-    </section>
-  </section>
-</section>
+<!-- Pagination -->
+{% if is_paginated %}
+<nav class="pagination" aria-label="Feedback pages">
+  <div style="display: flex; gap: 8px;">
+    {% if page_obj.has_previous %}
+    <a class="btn btn-secondary btn-sm" href="?page={{ page_obj.previous_page_number }}&q={{ search_term|urlencode }}&status={{ selected_status }}&priority={{ selected_priority }}&category={{ selected_category }}">
+      <span class="material-symbols-outlined">arrow_back</span>
+      Previous
+    </a>
+    {% endif %}
+  </div>
+  <span class="pagination-label">Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+  <div style="display: flex; gap: 8px;">
+    {% if page_obj.has_next %}
+    <a class="btn btn-secondary btn-sm" href="?page={{ page_obj.next_page_number }}&q={{ search_term|urlencode }}&status={{ selected_status }}&priority={{ selected_priority }}&category={{ selected_category }}">
+      Next
+      <span class="material-symbols-outlined">arrow_forward</span>
+    </a>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}
+
+<script>
+function toggleFilters() {
+    const overlay = document.getElementById('filter-overlay');
+    const backdrop = document.getElementById('filter-backdrop');
+    if (overlay.style.display === 'none' || overlay.style.display === '') {
+        // Sync search input value so filters don't overwrite current text
+        const searchInput = document.querySelector('.search-input');
+        if (searchInput) {
+            document.getElementById('filter-search-input').value = searchInput.value;
+        }
+        overlay.style.display = 'block';
+        backdrop.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    } else {
+        overlay.style.display = 'none';
+        backdrop.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+</script>
+
 {% endblock content %}

@@ -1,4 +1,6 @@
 {% load static %}
+{% load notification_tags %}
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -11,49 +13,145 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="{% static 'feedback/styles.css' %}" />
-    <title>{% block title %}Feedback Hub{% endblock title %}</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{% static 'feedback/stitch.css' %}" />
+    <title>{% block title %}FeedbackFlow{% endblock title %}</title>
   </head>
   <body>
-    <div class="page-shell">
-      <header class="topbar">
-        <div class="topbar-copy">
-          <p class="eyebrow">Feedback management system</p>
-          <h1>Feedback Hub</h1>
-          <p class="topbar-note">
-            Route requests, capture responses, and keep the queue readable for each team.
-          </p>
-        </div>
-        <div class="topbar-actions">
-          {% if perms.feedback.add_department %}
-          <a class="button button-secondary" href="{% url 'department_create' %}">Add department</a>
+    <!-- Top App Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="icon-button menu-toggle topbar-action-button" onclick="toggleSidebar()" type="button">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <h1 class="topbar-title">FeedbackFlow</h1>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-button" id="notification-button" type="button" style="position:relative;">
+          <span class="material-symbols-outlined">notifications</span>
+          {% unread_notification_count as unread_count %}
+          {% if unread_count > 0 %}
+            <span class="notification-badge" style="position:absolute; top:-4px; right:-4px; background:#e53935; color:#fff; border-radius:50%; padding:2px 6px; font-size:0.7rem;">{{ unread_count }}</span>
           {% endif %}
-          {% if request.user.is_authenticated %}
-          <div class="user-pill">
-            <span class="user-pill-label">Signed in as</span>
-            <strong>{{ request.user.name }}</strong>
-          </div>
-          <form action="{% url 'user_logout' %}" method="post">
-            {% csrf_token %}
-            <button class="button button-secondary" type="submit">Logout</button>
-          </form>
-          {% else %}
-          <a class="button button-secondary" href="{% url 'user_login' %}">Login</a>
-          {% endif %}
-        </div>
-        {% if perms.feedback.add_feedback %}
-        <a class="button button-primary" href="{% url 'feedback_create' %}"
-          >New feedback</a
-        >
-        {% endif %}
-      </header>
+        </button>
+        {% notification_dropdown %}
 
-      <main class="content-grid">
+
+        {% if request.user.is_authenticated %}
+        <div class="user-avatar" title="{{ request.user.name }}">
+          {{ request.user.name|first|upper }}
+        </div>
+        <form action="{% url 'account:user_logout' %}" method="post" style="display: inline;">
+          {% csrf_token %}
+          <button type="submit" class="icon-button topbar-action-button" title="Logout">
+            <span class="material-symbols-outlined">logout</span>
+          </button>
+        </form>
+        {% else %}
+        <a href="{% url 'account:user_login' %}" class="btn btn-secondary btn-sm">Sign In</a>
+        {% endif %}
+      </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <nav>
+        <ul class="sidebar-nav">
+          <li class="sidebar-nav-item">
+            <a href="{% url 'feedback_list' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'feedback_list' %}active{% endif %}">
+              <span class="material-symbols-outlined">inbox</span>
+              <span>Feedback Queue</span>
+            </a>
+          </li>
+          <li class="sidebar-nav-item">
+            <a href="{% url 'analytics' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}">
+              <span class="material-symbols-outlined">assessment</span>
+              <span>Analytics</span>
+            </a>
+          </li>
+          {% if perms.feedback.add_department %}
+          <li class="sidebar-nav-item">
+            <a href="{% url 'department_create' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'department_create' %}active{% endif %}">
+              <span class="material-symbols-outlined">business</span>
+              <span>Departments</span>
+            </a>
+          </li>
+          {% endif %}
+          <li class="sidebar-nav-item">
+            <a href="{% url 'feedback_create' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'feedback_create' %}active{% endif %}">
+              <span class="material-symbols-outlined">edit</span>
+              <span>Submit Feedback</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main>
+      <div class="page-container">
         {% block content %}{% endblock content %}
-      </main>
-    </div>
+      </div>
+    </main>
+
+    <script>
+      function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        if (window.innerWidth <= 768) {
+          sidebar.classList.toggle('active');
+        } else {
+          sidebar.classList.toggle('collapsed');
+          document.querySelector('main').classList.toggle('expanded');
+        }
+      }
+
+      // Close sidebar when clicking on a link
+      document.querySelectorAll('.sidebar-nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+          if (window.innerWidth <= 768) {
+            document.getElementById('sidebar').classList.remove('active');
+          }
+        });
+      });
+
+        // WebSocket for real-time notifications via Django Channels
+        if (window.WebSocket) {
+            const socket = new WebSocket('ws://' + window.location.host + '/ws/notifications/');
+            socket.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    const badge = document.querySelector('.notification-badge');
+                    if (badge) {
+                        const current = parseInt(badge.textContent) || 0;
+                        badge.textContent = current + 1;
+                    } else {
+                        const btn = document.getElementById('notification-button');
+                        const span = document.createElement('span');
+                        span.className = 'notification-badge';
+                        span.style.cssText = 'position:absolute; top:-4px; right:-4px; background:#e53935; color:#fff; border-radius:50%; padding:2px 6px; font-size:0.7rem;';
+                        span.textContent = '1';
+                        btn.appendChild(span);
+                    }
+                    const dropdown = document.getElementById('notification-dropdown');
+                    if (dropdown) {
+                        const ul = dropdown.querySelector('ul');
+                        if (ul) {
+                            const li = document.createElement('li');
+                            li.style.cssText = 'border-bottom:1px solid #f0f0f0; padding:0.5rem; background:#f9f9ff;';
+                            li.innerHTML = `<strong>${data.title}</strong><br><small>${data.message}</small><br><small class="text-muted" style="float:right;">${new Date(data.created_at).toLocaleString()}</small>`;
+                            ul.insertBefore(li, ul.firstChild);
+                        }
+                    }
+                } catch (e) { console.error('WebSocket parse error', e); }
+            };
+            socket.onclose = function() { console.warn('Notification socket closed'); };
+        }
+    </script>
   </body>
 </html>

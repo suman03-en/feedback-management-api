@@ -18,7 +18,8 @@ class UserRegisterView(View):
         form = self.get_form(request.POST)
         if form.is_valid():
             form.save()
-            return redirect("user_login")
+            return redirect("account:user_login")
+
         return render(request, self.template_name, {"form": form})
 
 

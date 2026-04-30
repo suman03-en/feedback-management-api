@@ -4,38 +4,446 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Sign In - FeedbackFlow</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'account/register.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #070235;
+            --on-primary: #ffffff;
+            --primary-container: #1e1b4b;
+            --on-primary-container: #8683ba;
+            --secondary: #0058be;
+            --surface: #f8f9ff;
+            --surface-container-lowest: #ffffff;
+            --outline-variant: #c8c5d0;
+            --on-surface-variant: #47464f;
+            --on-surface: #0b1c30;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--surface);
+            color: var(--on-surface);
+        }
+
+        main {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (min-width: 1024px) {
+            main {
+                flex-direction: row;
+            }
+        }
+
+        .branding-panel {
+            display: none;
+            flex: 1;
+            background: var(--primary);
+            color: var(--on-primary);
+            padding: 32px;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @media (min-width: 1024px) {
+            .branding-panel {
+                display: flex;
+            }
+        }
+
+        .branding-panel::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            left: -100px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(33, 112, 228, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .branding-panel::after {
+            content: '';
+            position: absolute;
+            bottom: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(134, 131, 186, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .branding-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .branding-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 24px;
+        }
+
+        .branding-icon .material-symbols-outlined {
+            font-size: 64px;
+        }
+
+        .branding-title {
+            font-size: 36px;
+            font-weight: 700;
+            line-height: 44px;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+        }
+
+        .branding-description {
+            font-size: 18px;
+            line-height: 28px;
+            opacity: 0.95;
+            margin-bottom: 32px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .feature-item {
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            text-align: left;
+            font-size: 12px;
+            line-height: 18px;
+        }
+
+        .feature-item .material-symbols-outlined {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .form-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: var(--surface);
+        }
+
+        @media (min-width: 1024px) {
+            .form-panel {
+                padding: 32px;
+            }
+        }
+
+        .mobile-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        @media (min-width: 1024px) {
+            .mobile-logo {
+                display: none;
+            }
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--on-primary);
+            margin-bottom: 8px;
+        }
+
+        .logo-icon .material-symbols-outlined {
+            font-size: 32px;
+        }
+
+        .logo-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .form-card {
+            width: 100%;
+            max-width: 520px;
+            background: var(--surface-container-lowest);
+            border: 1px solid var(--outline-variant);
+            border-radius: 16px;
+            padding: 48px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        }
+
+        .form-header {
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        @media (min-width: 1024px) {
+            .form-header {
+                text-align: left;
+            }
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            background: #dce9ff;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+
+        .form-title {
+            font-size: 30px;
+            font-weight: 600;
+            line-height: 38px;
+            letter-spacing: -0.01em;
+            margin: 0 0 8px 0;
+            color: var(--on-surface);
+        }
+
+        .form-subtitle {
+            font-size: 14px;
+            line-height: 20px;
+            color: var(--on-surface-variant);
+            margin: 0;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--on-surface-variant);
+        }
+
+        input,
+        select {
+            padding: 12px 16px;
+            border: 1px solid var(--outline-variant);
+            border-radius: 8px;
+            background: #f8f9ff;
+            color: var(--on-surface);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: all 200ms;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 3px rgba(0, 88, 190, 0.1);
+            background: #ffffff;
+        }
+
+        input::placeholder {
+            color: var(--on-surface-variant);
+        }
+
+        .submit-btn {
+            padding: 12px 16px;
+            background: var(--primary);
+            color: var(--on-primary);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 200ms;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        }
+
+        .submit-btn:hover {
+            background: var(--primary-container);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .divider {
+            position: relative;
+            margin: 8px 0;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--outline-variant);
+        }
+
+        .divider-text {
+            position: relative;
+            display: inline-block;
+            padding: 0 8px;
+            background: var(--surface-container-lowest);
+            font-size: 12px;
+            color: var(--outline-variant);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 16px;
+        }
+
+        .register-link a {
+            color: var(--secondary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        .form-alert {
+            padding: 12px 16px;
+            background: #ffdad6;
+            border: 1px solid #f5c2c2;
+            border-radius: 8px;
+            color: #7f1d1d;
+            font-size: 14px;
+        }
+
+        .field-errors {
+            color: #7f1d1d;
+            font-size: 12px;
+            list-style: none;
+        }
+
+        .field-errors span {
+            display: block;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                flex-direction: column;
+            }
+            
+            .form-card {
+                padding: 24px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <main class="page auth-page">
-        <section class="auth-shell">
-            <aside class="auth-copy">
-                <p class="eyebrow">Feedback hub</p>
-                <h1 id="login-title">Welcome back</h1>
-                <p>
-                    Sign in to review feedback, respond to requests, and keep the queue moving.
+    <main>
+        <!-- Left Branding Panel -->
+        <section class="branding-panel">
+            <div class="branding-content">
+                <div class="branding-icon">
+                    <span class="material-symbols-outlined">forum</span>
+                </div>
+                <h1 class="branding-title">FeedbackFlow</h1>
+                <p class="branding-description">
+                    The institutional framework for professional growth and accountability. Manage insights, resolve challenges, and drive excellence.
                 </p>
-                <ul class="feature-list">
-                    <li class="feature-card">See your assigned queue at a glance.</li>
-                    <li class="feature-card">Route feedback to the right department faster.</li>
-                    <li class="feature-card">Track responses and resolution status in one place.</li>
-                </ul>
-            </aside>
+                <div class="features">
+                    <div class="feature-item">
+                        <span class="material-symbols-outlined">analytics</span>
+                        <strong>Analytics</strong>
+                        <p>Deep sentiment mapping across all departments.</p>
+                    </div>
+                    <div class="feature-item">
+                        <span class="material-symbols-outlined">verified</span>
+                        <strong>Trust</strong>
+                        <p>Secure and anonymous feedback processing.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-            <section class="card auth-card" aria-labelledby="login-title">
-                <header class="card-header">
-                    <h2>Login</h2>
-                    <p>Use your work email to access the feedback workspace.</p>
+        <!-- Right Form Panel -->
+        <section class="form-panel">
+            <!-- Mobile Logo -->
+            <div class="mobile-logo">
+                <div class="logo-icon">
+                    <span class="material-symbols-outlined">forum</span>
+                </div>
+                <h2 class="logo-title">FeedbackFlow</h2>
+            </div>
+
+            <!-- Form Card -->
+            <div class="form-card">
+                <header class="form-header">
+                    <div class="badge">Enterprise Access</div>
+                    <h2 class="form-title">Sign In</h2>
+                    <p class="form-subtitle">Enter your corporate email to access your workspace.</p>
                 </header>
 
-                <form method="post" class="register-form" novalidate>
+                <form method="post" novalidate>
                     {% csrf_token %}
+                    
                     {% if form.non_field_errors %}
-                    <div class="form-alert" role="alert">
+                    <div class="form-alert">
                         {% for error in form.non_field_errors %}
                         <p>{{ error }}</p>
                         {% endfor %}
@@ -47,18 +455,29 @@
                         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                         {{ field }}
                         {% if field.errors %}
-                        <div class="field-errors">
+                        <ul class="field-errors">
                             {% for error in field.errors %}
                             <span>{{ error }}</span>
                             {% endfor %}
-                        </div>
+                        </ul>
                         {% endif %}
                     </div>
                     {% endfor %}
 
-                    <button type="submit" class="submit-btn">Login</button>
+                    <button type="submit" class="submit-btn">
+                        Continue
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </button>
                 </form>
-            </section>
+
+                <div class="divider">
+                    <span class="divider-text">New to FeedbackFlow?</span>
+                </div>
+
+                <div class="register-link">
+                    <a href="{% url 'account:user_register' %}">Create an account</a>
+                </div>
+            </div>
         </section>
     </main>
 </body>

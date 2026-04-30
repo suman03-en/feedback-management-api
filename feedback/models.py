@@ -154,3 +154,39 @@ class FeedbackResponse(models.Model):
 
     def __str__(self):
         return f"Response to {self.feedback.creator} by {', '.join(str(user) for user in self.responder.all())}"
+
+
+class Notification(models.Model):
+    """In‑app notification model used by NotificationService."""
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+    notification_type = models.CharField(max_length=50)
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    feedback = models.ForeignKey(
+        Feedback,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="notifications",
+    )
+    response = models.ForeignKey(
+        FeedbackResponse,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="notifications",
+    )
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.title} for {self.recipient}"

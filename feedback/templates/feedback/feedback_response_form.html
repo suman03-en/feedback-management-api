@@ -1,54 +1,169 @@
-{% extends "feedback/base.html" %} {% block title %}Respond to Feedback{%endblock title %} 
+{% extends "feedback/base.html" %}
+{% block title %}Respond to Feedback - FeedbackFlow{% endblock title %}
 {% block content %}
-<section class="detail-layout">
-  <article class="card form-card">
-    <div class="form-header">
-      <div>
-        <p class="eyebrow">Action item</p>
-        <h2 class="section-title">Respond to feedback</h2>
-        <p class="section-subtitle">
-          Add a clear response and optionally mark the request as resolved.
-        </p>
+
+<div class="page-header">
+  <div class="header-content">
+    <a href="{% url 'feedback_response_list' feedback.pk %}" class="back-link" style="display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; color: var(--secondary); text-decoration: none; font-weight: 600; padding: 8px 12px; border-radius: var(--radius-md); transition: all 150ms ease;">
+      <span class="material-symbols-outlined">arrow_back</span>
+      Back
+    </a>
+    <h1 class="h1">Respond to Feedback</h1>
+    <p class="body-sm">Add your response and optionally mark this feedback as resolved.</p>
+  </div>
+</div>
+
+<div class="detail-grid">
+    <!-- Main Form Column -->
+    <div class="detail-main">
+      <!-- Feedback Preview Card -->
+      <div class="card" style="margin-bottom: 24px;">
+        <div class="card-body">
+          <p class="label-caps" style="color: var(--on-surface-variant); margin: 0 0 12px 0;">Original Feedback</p>
+          <div style="padding: 16px; background: var(--surface-container-low); border-radius: var(--radius-lg); border-left: 4px solid var(--secondary);">
+            <p class="body-sm" style="margin: 0 0 8px 0; color: var(--on-surface-variant);"><strong>From:</strong> {{ feedback.creator.name }}</p>
+            <p class="body-md" style="margin: 0; line-height: 1.8; color: var(--on-surface);">{{ feedback.message }}</p>
+          </div>
+        </div>
       </div>
-      <span class="badge badge-{{ feedback.status }}"
-        >{{ feedback.status }}</span
-      >
+
+      <!-- Response Form Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="h3" style="margin: 0;">Add Your Response</h2>
+        </div>
+
+        <form method="post" class="card-body" style="display: flex; flex-direction: column; gap: 24px;">
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div style="padding: 14px 16px; background: #fef2f2; border: 2px solid #fecaca; border-radius: var(--radius-lg); color: #991b1b; font-size: 14px;">
+            {% for error in form.non_field_errors %}
+            <p style="margin: 0;"><strong>Error:</strong> {{ error }}</p>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Response Message -->
+          <div class="form-group">
+            <label for="{{ form.responder_message.id_for_label }}" class="form-label">{{ form.responder_message.label }}</label>
+            {{ form.responder_message }}
+            {% if form.responder_message.errors %}
+            <div style="color: #991b1b; font-size: 12px; font-weight: 500;">
+              {% for error in form.responder_message.errors %}<span>{{ error }}</span>{% endfor %}
+            </div>
+            {% endif %}
+            <p class="form-help">Provide a clear, comprehensive response addressing the feedback</p>
+          </div>
+
+          <!-- Resolve Checkbox -->
+          <div class="form-group" style="flex-direction: row; align-items: center; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+              {{ form.resolve }}
+              <label for="{{ form.resolve.id_for_label }}" class="form-label" style="margin: 0; cursor: pointer; font-weight: 600;">{{ form.resolve.label }}</label>
+            </div>
+            {% if form.resolve.errors %}
+            <div style="color: #991b1b; font-size: 12px; font-weight: 500; margin-left: auto;">
+              {% for error in form.resolve.errors %}<span>{{ error }}</span>{% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          <p class="form-help" style="margin-top: -12px; margin-bottom: 0;">Check this only when the issue is completely resolved</p>
+
+          <!-- Form Footer with Actions -->
+          <div class="card-footer" style="margin: 32px -32px -32px -32px; border-top: 1px solid var(--outline-variant);">
+            <button type="submit" class="btn btn-primary">
+              <span class="material-symbols-outlined">send</span>
+              Submit Response
+            </button>
+            <a href="{% url 'feedback_detail' feedback.pk %}" class="btn btn-secondary">
+              <span class="material-symbols-outlined">close</span>
+              Cancel
+            </a>
+          </div>
+        </form>
+      </div>
     </div>
 
-    <div class="meta-block preview-block">
-      <p class="meta-label">Feedback preview</p>
-      <p class="meta-value">{{ feedback.creator.name }}</p>
-      <p class="feedback-summary">{{ feedback.message }}</p>
-    </div>
+    <!-- Sidebar Info Column -->
+    <div class="detail-sidebar">
+      <!-- Status Info Card -->
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="card-body">
+          <h3 class="h3" style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">Status Details</h3>
 
-    <form action="{% if feedbackresponse %}{% url 'feedback_response_edit' feedbackresponse.pk %}{% else %}{% url 'feedback_response_create' feedback.pk %}{% endif %}" method="post" class="stacked-form">
-      {% csrf_token %}
-      <div class="field-block full-width">
-        <label for="id_responder_message">{{ form.responder_message.label }}</label>
-        {{ form.responder_message }}
-        {{ form.responder_message.errors }}
-      </div>
-      <div class="field-block checkbox-block">
-        <label for="id_resolve">{{ form.resolve }} {{ form.resolve.label }}</label>
-        {{ form.resolve.errors }}
-      </div>
-      <div class="form-help">
-        Mark the item as resolved only when the issue is fully closed. Otherwise
-        it will be moved to reviewed.
-      </div>
-      <button class="button button-primary" type="submit">
-        Submit response
-      </button>
-    </form>
-  </article>
+          <div style="padding: 12px 16px; border-radius: var(--radius-lg); background: linear-gradient(135deg, var(--secondary-fixed) 0%, var(--secondary-fixed-dim) 100%); margin-bottom: 20px;">
+            <p class="label-caps" style="color: var(--on-secondary-fixed); margin: 0 0 4px 0;">Current Status</p>
+            <p class="body-md" style="margin: 0; font-weight: 600; color: var(--on-secondary-fixed);">{{ feedback.status|title }}</p>
+          </div>
 
-  <aside class="card sidebar-card">
-    <p class="eyebrow">Status flow</p>
-    <h3 class="card-title">Keep routing simple</h3>
-    <p class="section-subtitle">
-      Reviewed means the feedback has been acknowledged. Resolved should be
-      reserved for completed outcomes.
-    </p>
-  </aside>
-</section>
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <!-- When Submit -->
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <span class="material-symbols-outlined" style="font-size: 20px; color: var(--secondary);">assignment</span>
+                <p class="label-caps" style="color: var(--on-surface-variant); margin: 0; font-size: 12px;">When You Submit</p>
+              </div>
+              <p class="body-sm" style="margin: 0; color: var(--on-surface-variant); padding-left: 28px;">Status will change to <strong>Reviewed</strong></p>
+            </div>
+
+            <!-- If Resolve -->
+            {% if form.resolve %}
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <span class="material-symbols-outlined" style="font-size: 20px; color: #10b981;">check_circle</span>
+                <p class="label-caps" style="color: var(--on-surface-variant); margin: 0; font-size: 12px;">If You Mark Resolved</p>
+              </div>
+              <p class="body-sm" style="margin: 0; color: var(--on-surface-variant); padding-left: 28px;">Status will change to <strong>Resolved</strong></p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Feedback Meta Card -->
+      <div class="card">
+        <div class="card-body">
+          <h3 class="h3" style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600;">Feedback Details</h3>
+
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <!-- Priority -->
+            {% if feedback.priority %}
+            <div style="padding: 12px; background: var(--surface-container-low); border-radius: var(--radius-md);">
+              <p class="label-caps" style="color: var(--on-surface-variant); margin: 0 0 4px 0; font-size: 11px;">Priority</p>
+              <p class="body-sm" style="margin: 0; font-weight: 600; color: var(--on-surface);">{{ feedback.priority|title }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Category -->
+            {% if feedback.category %}
+            <div style="padding: 12px; background: var(--surface-container-low); border-radius: var(--radius-md);">
+              <p class="label-caps" style="color: var(--on-surface-variant); margin: 0 0 4px 0; font-size: 11px;">Category</p>
+              <p class="body-sm" style="margin: 0; font-weight: 600; color: var(--on-surface);">{{ feedback.category.name }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Departments -->
+            {% if feedback.to_departments.all %}
+            <div style="padding: 12px; background: var(--surface-container-low); border-radius: var(--radius-md);">
+              <p class="label-caps" style="color: var(--on-surface-variant); margin: 0 0 8px 0; font-size: 11px;">Routed To</p>
+              <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                {% for dept in feedback.to_departments.all %}
+                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: var(--secondary-fixed); color: var(--secondary-container); border-radius: var(--radius-full); font-size: 12px; font-weight: 600;">{{ dept.name }}</span>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+  </div>
+</div>
+
+<style>
+  .back-link:hover {
+    background-color: var(--surface-container-low);
+  }
+</style>
+
 {% endblock content %}
