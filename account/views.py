@@ -57,4 +57,4 @@ class UserLogoutView(View):
         if not request.user.is_authenticated:
             return HttpResponse("User is not logged in")
         logout(request)
-        return redirect("user_login")
+        return redirect("account:user_login")
