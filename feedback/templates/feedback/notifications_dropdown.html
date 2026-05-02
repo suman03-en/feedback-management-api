@@ -34,11 +34,34 @@
     dropdown.addEventListener('click', function(e) {
       if (e.target.classList.contains('mark-read-btn')) {
         const id = e.target.dataset.id;
+        const liElement = e.target.closest('li');
+        const unreadCountEl = document.getElementById('unread-count');
+        
         fetch('{% url "notification_mark_read" pk=0 %}'.replace('/0/', '/' + id + '/'), {
           method: 'POST',
           headers: { 'X-CSRFToken': '{{ csrf_token }}' },
         }).then(r => r.json()).then(data => {
-          if (data.status === 'ok') { location.reload(); }
+          if (data.success) {
+            // Remove highlight from notification
+            if (liElement) {
+              liElement.style.background = '#fff';
+              e.target.remove(); // Remove the mark-read button
+            }
+            // Update unread count
+            if (unreadCountEl) {
+              const current = parseInt(unreadCountEl.textContent) || 1;
+              unreadCountEl.textContent = Math.max(0, current - 1);
+            }
+            // Update badge
+            const badge = document.querySelector('.notification-badge');
+            if (badge) {
+              const current = parseInt(badge.textContent) || 1;
+              badge.textContent = Math.max(0, current - 1);
+              if (parseInt(badge.textContent) === 0) {
+                badge.remove();
+              }
+            }
+          }
         });
       }
     });

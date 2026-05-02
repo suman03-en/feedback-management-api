@@ -7,6 +7,7 @@ from django.views.generic import (
     TemplateView,
 )
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.views import View
 from django.shortcuts import render, redirect, get_object_or_404
@@ -178,6 +179,10 @@ class FeedbackCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView
         # Assign view permissions to the managers and auditors of the routed departments
         assign_department_permissions(feedback=self.object)
 
+        messages.success(
+            self.request,
+            f"Feedback '{self.object.title or 'Untitled'}' created successfully!",
+        )
         return response
 
 
@@ -194,6 +199,12 @@ class FeedbackDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView
             raise PermissionDenied
 
         return obj
+
+    def delete(self, request, *args, **kwargs):
+        feedback_title = self.get_object().title or "Untitled"
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, f"Feedback '{feedback_title}' deleted successfully!")
+        return response
 
 
 class FeedbackResponseCreateView(
@@ -239,6 +250,7 @@ class FeedbackResponseCreateView(
         assign_department_permissions(response=self.object)
         assign_permission_creator_of_feedback_to_response(self.object, self.feedback)
 
+        messages.success(self.request, "Response created successfully!")
         return response
 
 
@@ -286,6 +298,7 @@ class FeedbackResponseEditView(LoginRequiredMixin, PermissionRequiredMixin, Upda
         return kwargs
 
     def get_success_url(self):
+        messages.success(self.request, "Response updated successfully!")
         return reverse("feedback_response_list", kwargs={"pk": self.object.feedback.pk})
 
 
@@ -302,6 +315,11 @@ class FeedbackResponseDeleteView(
         if not self.request.user.has_perm("feedback.delete_feedbackresponse", obj):
             raise PermissionDenied
         return obj
+
+    def delete(self, request, *args, **kwargs):
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, "Response deleted successfully!")
+        return response
 
 
 class FeedbackResponseAssignView(LoginRequiredMixin, PermissionRequiredMixin, View):
@@ -335,6 +353,9 @@ class FeedbackResponseAssignView(LoginRequiredMixin, PermissionRequiredMixin, Vi
                 _, created = self.feedback.assign_to_responder(responder)
                 if created:
                     assign_perm("feedback.view_feedback", responder, self.feedback)
+                    messages.success(
+                        request, f"Feedback assigned to {responder.name} successfully!"
+                    )
             except ValueError as e:
                 form.add_error(None, str(e))
                 return render(
@@ -355,6 +376,7 @@ from django.views.generic import ListView, View
 from django.http import JsonResponse, HttpResponseBadRequest
 from .models import Notification
 
+
 class NotificationListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
     """List recent notifications for the logged‑in user.
     Returns JSON when ``?format=json`` is present, otherwise renders
@@ -368,7 +390,9 @@ class NotificationListView(LoginRequiredMixin, PermissionRequiredMixin, ListView
     paginate_by = 20
 
     def get_queryset(self):
-        return Notification.objects.filter(recipient=self.request.user).order_by("-created_at")
+        return Notification.objects.filter(recipient=self.request.user).order_by(
+            "-created_at"
+        )
 
     def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get("format") == "json":
@@ -386,6 +410,7 @@ class NotificationListView(LoginRequiredMixin, PermissionRequiredMixin, ListView
             return JsonResponse({"notifications": data})
         return super().render_to_response(context, **response_kwargs)
 
+
 class MarkNotificationReadView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """Mark a single notification as read (AJAX)."""
 
@@ -395,18 +420,22 @@ class MarkNotificationReadView(LoginRequiredMixin, PermissionRequiredMixin, View
         try:
             notification = Notification.objects.get(id=pk, recipient=request.user)
         except Notification.DoesNotExist:
-            return HttpResponseBadRequest("Invalid notification")
+            return JsonResponse(
+                {"success": False, "error": "Invalid notification"}, status=400
+            )
         if not notification.is_read:
             notification.is_read = True
             notification.read_at = timezone.now()
             notification.save(update_fields=["is_read", "read_at"])
-        return JsonResponse({"status": "ok"})
+        return JsonResponse({"success": True, "status": "ok"})
+
 
 # ---------------------------------------------------------------------------
 # Server‑Sent Events endpoint for real‑time notifications
 # ---------------------------------------------------------------------------
 from django.http import StreamingHttpResponse
 import time
+
 
 class NotificationSSEView(LoginRequiredMixin, PermissionRequiredMixin, View):
     """Stream new notifications to the client using Server‑Sent Events.
@@ -443,8 +472,11 @@ class NotificationSSEView(LoginRequiredMixin, PermissionRequiredMixin, View):
                     yield f"data: {json.dumps(payload)}\n\n"
                     last_id = notif.id
                 time.sleep(5)
-        response = StreamingHttpResponse(event_stream(), content_type="text/event-stream")
-        response['Cache-Control'] = 'no-cache'
+
+        response = StreamingHttpResponse(
+            event_stream(), content_type="text/event-stream"
+        )
+        response["Cache-Control"] = "no-cache"
         return response
 
 
@@ -455,6 +487,13 @@ class DepartmentCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateVi
     success_url = reverse_lazy("feedback_list")
     permission_required = ["feedback.add_department"]
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(
+            self.request, f"Department '{self.object.name}' created successfully!"
+        )
+        return response
+
 
 class CategoryCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Category
@@ -463,5 +502,12 @@ class CategoryCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView
     success_url = reverse_lazy("feedback_list")
     permission_required = ["feedback.add_category"]
 
-# Existing views continue below …
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(
+            self.request, f"Category '{self.object.name}' created successfully!"
+        )
+        return response
 
+
+# Existing views continue below …

@@ -96,6 +96,48 @@
     <!-- Main Content -->
     <main>
       <div class="page-container">
+        <!-- Django Messages -->
+        {% if messages %}
+          <div class="messages-container" style="margin-bottom: 20px;">
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }}" style="
+                padding: 12px 16px;
+                border-radius: 4px;
+                margin-bottom: 10px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                {% if message.tags == 'success' %}
+                  background-color: #d4edda;
+                  color: #155724;
+                  border: 1px solid #c3e6cb;
+                {% elif message.tags == 'error' %}
+                  background-color: #f8d7da;
+                  color: #721c24;
+                  border: 1px solid #f5c6cb;
+                {% elif message.tags == 'warning' %}
+                  background-color: #fff3cd;
+                  color: #856404;
+                  border: 1px solid #ffeaa7;
+                {% elif message.tags == 'info' %}
+                  background-color: #d1ecf1;
+                  color: #0c5460;
+                  border: 1px solid #bee5eb;
+                {% endif %}
+              ">
+                <span>{{ message }}</span>
+                <button type="button" onclick="this.parentElement.style.display='none';" style="
+                  background: none;
+                  border: none;
+                  cursor: pointer;
+                  font-size: 18px;
+                  color: inherit;
+                  opacity: 0.7;
+                ">&times;</button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
         {% block content %}{% endblock content %}
       </div>
     </main>
@@ -121,37 +163,168 @@
       });
 
         // WebSocket for real-time notifications via Django Channels
-        if (window.WebSocket) {
-            const socket = new WebSocket('ws://' + window.location.host + '/ws/notifications/');
+        function connectNotificationSocket() {
+            if (!window.WebSocket) return;
+            
+            const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+            const socket = new WebSocket(protocol + window.location.host + '/ws/notifications/');
+            
+            socket.onopen = function() {
+                console.log('Notification WebSocket connected');
+            };
+            
             socket.onmessage = function(event) {
                 try {
                     const data = JSON.parse(event.data);
-                    const badge = document.querySelector('.notification-badge');
+                    
+                    // Update badge count
+                    let badge = document.querySelector('.notification-badge');
                     if (badge) {
                         const current = parseInt(badge.textContent) || 0;
                         badge.textContent = current + 1;
                     } else {
                         const btn = document.getElementById('notification-button');
-                        const span = document.createElement('span');
-                        span.className = 'notification-badge';
-                        span.style.cssText = 'position:absolute; top:-4px; right:-4px; background:#e53935; color:#fff; border-radius:50%; padding:2px 6px; font-size:0.7rem;';
-                        span.textContent = '1';
-                        btn.appendChild(span);
+                        if (btn) {
+                            const span = document.createElement('span');
+                            span.className = 'notification-badge';
+                            span.style.cssText = 'position:absolute; top:-4px; right:-4px; background:#e53935; color:#fff; border-radius:50%; padding:2px 6px; font-size:0.7rem;';
+                            span.textContent = '1';
+                            btn.appendChild(span);
+                        }
                     }
+                    
+                    // Update unread count in dropdown
+                    const unreadCountEl = document.getElementById('unread-count');
+                    if (unreadCountEl) {
+                        const current = parseInt(unreadCountEl.textContent) || 0;
+                        unreadCountEl.textContent = current + 1;
+                    }
+                    
+                    // Add notification to dropdown
                     const dropdown = document.getElementById('notification-dropdown');
                     if (dropdown) {
                         const ul = dropdown.querySelector('ul');
                         if (ul) {
                             const li = document.createElement('li');
                             li.style.cssText = 'border-bottom:1px solid #f0f0f0; padding:0.5rem; background:#f9f9ff;';
-                            li.innerHTML = `<strong>${data.title}</strong><br><small>${data.message}</small><br><small class="text-muted" style="float:right;">${new Date(data.created_at).toLocaleString()}</small>`;
+                            const dateStr = new Date(data.created_at).toLocaleString();
+                            li.innerHTML = `
+                                <strong>${data.title}</strong><br>
+                                <small>${data.message}</small><br>
+                                <small class="text-muted" style="float:right;">${dateStr}</small>
+                                <button class="mark-read-btn" data-id="${data.id}" style="background:none;border:none;color:#007bff;cursor:pointer;margin-top:4px;font-size:0.8rem;">Mark read</button>
+                            `;
                             ul.insertBefore(li, ul.firstChild);
+                            
+                            // Attach event listener to mark-read button
+                            const markReadBtn = li.querySelector('.mark-read-btn');
+                            if (markReadBtn) {
+                                markReadBtn.addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    markNotificationAsRead(data.id, li, unreadCountEl);
+                                });
+                            }
                         }
                     }
+                    
+                    // Show toast notification
+                    showNotificationToast(data.title, data.message);
                 } catch (e) { console.error('WebSocket parse error', e); }
             };
-            socket.onclose = function() { console.warn('Notification socket closed'); };
+            
+            socket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+            
+            socket.onclose = function(event) {
+                console.warn('Notification socket closed. Attempting to reconnect...');
+                // Attempt to reconnect after 3 seconds
+                setTimeout(connectNotificationSocket, 3000);
+            };
         }
+        
+        function markNotificationAsRead(notifId, liElement, unreadCountEl) {
+            fetch(`/feedback/notifications/mark/${notifId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove highlight from notification
+                    if (liElement) {
+                        liElement.style.background = '#fff';
+                    }
+                    // Update unread count
+                    if (unreadCountEl) {
+                        const current = parseInt(unreadCountEl.textContent) || 1;
+                        unreadCountEl.textContent = Math.max(0, current - 1);
+                    }
+                    // Update badge
+                    const badge = document.querySelector('.notification-badge');
+                    if (badge) {
+                        const current = parseInt(badge.textContent) || 1;
+                        badge.textContent = Math.max(0, current - 1);
+                        if (parseInt(badge.textContent) === 0) {
+                            badge.remove();
+                        }
+                    }
+                }
+            })
+            .catch(err => console.error('Error marking notification as read:', err));
+        }
+        
+        function showNotificationToast(title, message) {
+            // Create a simple toast notification
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #333;
+                color: #fff;
+                padding: 16px;
+                border-radius: 4px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                z-index: 9999;
+                max-width: 300px;
+                font-size: 14px;
+            `;
+            toast.innerHTML = `<strong>${title}</strong><br><small>${message}</small>`;
+            document.body.appendChild(toast);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+        
+        // Auto-dismiss success and info messages after 5 seconds
+        function autoDismissMessages() {
+            const messages = document.querySelectorAll('.messages-container .alert');
+            messages.forEach((message) => {
+                // Only auto-dismiss success and info messages
+                if (message.classList.contains('alert-success') || message.classList.contains('alert-info')) {
+                    setTimeout(() => {
+                        message.style.opacity = '0';
+                        message.style.transition = 'opacity 0.3s ease';
+                        setTimeout(() => message.remove(), 300);
+                    }, 5000);
+                }
+            });
+        }
+        
+        // Initialize WebSocket connection when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            connectNotificationSocket();
+            autoDismissMessages();
+        });
     </script>
   </body>
 </html>
